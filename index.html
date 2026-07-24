@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Im0xNiA2IDQgMTQiLz48cGF0aCBkPSJNMTIgNnYxNCIvPjxwYXRoIGQ9Ik04IDh2MTIiLz48cGF0aCBkPSJNNCA0djE2Ii8+PC9zdmc+Cg==">
+  <meta name="color-scheme" content="light">
+  <title>Course Library Command Center</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#mainContent">Skip to library content</a>
+
+  <div class="app-shell" id="appShell">
+    <aside class="sidebar" id="sidebar" aria-label="Course library navigation">
+      <div class="sidebar-brand">
+        <span class="brand-mark" aria-hidden="true">CL</span>
+        <span>
+          <strong>Course Library</strong>
+          <small>Three-module collection</small>
+        </span>
+      </div>
+
+      <nav class="primary-nav" aria-label="Library views and collections">
+        <section class="nav-group" aria-labelledby="viewsLabel">
+          <h2 id="viewsLabel">Views</h2>
+          <button class="nav-item view-nav" type="button" data-view="library">
+            <span class="icon icon-library" aria-hidden="true"></span>
+            <span>Library</span>
+          </button>
+          <button class="nav-item view-nav" type="button" data-view="tree">
+            <span class="icon icon-tree" aria-hidden="true"></span>
+            <span>Directory Tree</span>
+          </button>
+          <button class="nav-item view-nav" type="button" data-view="visual">
+            <span class="icon icon-folders" aria-hidden="true"></span>
+            <span>Visual Folders</span>
+          </button>
+        </section>
+
+        <section class="nav-group collections-nav" aria-labelledby="collectionsLabel">
+          <h2 id="collectionsLabel">Collections</h2>
+          <button class="nav-item collection-nav" type="button" data-collection="overview">
+            <span class="nav-marker overview" aria-hidden="true"></span>
+            <span>Course Overview</span>
+          </button>
+          <button class="nav-item collection-nav" type="button" data-module="00 - Course Administration and Shared Resources" data-path="00 - Course Administration and Shared Resources">
+            <span class="nav-marker admin" aria-hidden="true"></span>
+            <span>00 Administration</span>
+          </button>
+          <button class="nav-item collection-nav" type="button" data-module="01 - Module 1 - Data Science and Machine Learning" data-path="01 - Module 1 - Data Science and Machine Learning">
+            <span class="nav-marker module-1" aria-hidden="true"></span>
+            <span>01 Data Science &amp; ML</span>
+          </button>
+          <button class="nav-item collection-nav" type="button" data-module="02 - Module 2 - Deep Learning and Artificial Intelligence" data-path="02 - Module 2 - Deep Learning and Artificial Intelligence">
+            <span class="nav-marker module-2" aria-hidden="true"></span>
+            <span>02 Deep Learning &amp; AI</span>
+          </button>
+          <button class="nav-item collection-nav" type="button" data-module="03 - Module 3 - Generative AI" data-path="03 - Module 3 - Generative AI">
+            <span class="nav-marker module-3" aria-hidden="true"></span>
+            <span>03 Generative AI</span>
+          </button>
+          <button class="nav-item collection-nav" type="button" data-module="04 - Cross-Module Reference Materials" data-path="04 - Cross-Module Reference Materials">
+            <span class="nav-marker cross" aria-hidden="true"></span>
+            <span>04 Cross-Module</span>
+          </button>
+          <button class="nav-item collection-nav" type="button" data-collection="web-apps" data-resource-kind="web_app">
+            <span class="nav-marker web-app" aria-hidden="true"></span>
+            <span>Web Apps</span>
+          </button>
+        </section>
+      </nav>
+
+      <footer class="sidebar-footer">
+        <a href="data/course-catalog.json">Catalog JSON</a>
+        <a href="https://github.com/dhar174/AI-and-Data-Science-in-Python-class">GitHub repository</a>
+        <p>Verified baseline<br><strong id="sidebarFileCount">1,270 resources</strong></p>
+      </footer>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <button class="icon-button mobile-menu" id="mobileMenu" type="button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
+          <span class="icon icon-menu" aria-hidden="true"></span>
+        </button>
+        <div class="title-block">
+          <h1>Course Library Command Center</h1>
+          <div class="breadcrumb" id="breadcrumb" aria-label="Current location">Course Library / All materials</div>
+        </div>
+        <label class="search-box" for="searchInput">
+          <span class="icon icon-search" aria-hidden="true"></span>
+          <span class="sr-only">Search the course library</span>
+          <input id="searchInput" type="search" autocomplete="off" placeholder="Search resources, topics, types, keywords, or paths…">
+          <kbd>/</kbd><kbd>Ctrl K</kbd>
+        </label>
+        <div class="audience-switch" role="group" aria-label="Audience mode">
+          <button type="button" data-mode="All">All</button>
+          <button type="button" data-mode="Student">Student</button>
+        </div>
+      </header>
+
+      <main id="mainContent" tabindex="-1">
+        <section class="summary-strip" aria-label="Catalog summary">
+          <p id="summaryLine"></p>
+          <button class="text-button" id="overviewButton" type="button">View overview</button>
+        </section>
+
+        <section class="view-panel library-view" id="libraryView" aria-labelledby="libraryHeading">
+          <div class="filter-slot" data-filter-slot="library"></div>
+          <header class="view-heading">
+            <div>
+              <p class="section-kicker">Catalog view</p>
+              <h2 id="libraryHeading">All materials</h2>
+              <p id="librarySubtitle"></p>
+            </div>
+            <label class="page-size">Rows
+              <select id="pageSize">
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </label>
+          </header>
+          <div class="table-wrap" id="catalog-results">
+            <table>
+              <thead>
+                <tr>
+                  <th><button class="sort-button" type="button" data-sort="name">Name</button></th>
+                  <th><button class="sort-button" type="button" data-sort="location">Location</button></th>
+                  <th><button class="sort-button" type="button" data-sort="type">Type</button></th>
+                  <th><button class="sort-button" type="button" data-sort="audience">Audience</button></th>
+                  <th><button class="sort-button" type="button" data-sort="status">Status</button></th>
+                  <th><button class="sort-button" type="button" data-sort="modified">Updated</button></th>
+                  <th><span class="sr-only">Open</span></th>
+                </tr>
+              </thead>
+              <tbody id="catalogBody"></tbody>
+            </table>
+          </div>
+          <nav class="pagination" id="pagination" aria-label="Catalog pages"></nav>
+        </section>
+
+        <section class="view-panel tree-view" id="treeView" aria-labelledby="treeHeading" hidden>
+          <div class="filter-slot" data-filter-slot="tree"></div>
+          <header class="view-heading">
+            <div>
+              <p class="section-kicker">Physical hierarchy</p>
+              <h2 id="treeHeading">Directory Tree</h2>
+              <p>Expand folders with the mouse or arrow keys; select a resource to inspect it.</p>
+            </div>
+            <div class="button-row">
+              <button class="button secondary" id="treeRootButton" type="button">Return to root</button>
+              <button class="button secondary" id="treeCollapseButton" type="button">Collapse all</button>
+            </div>
+          </header>
+          <div class="tree-layout">
+            <aside class="tree-panel" aria-label="Directory navigation">
+              <div class="directory-tree" id="directoryTree" role="tree" aria-label="Course library directories"></div>
+            </aside>
+            <section class="tree-contents" aria-live="polite">
+              <div id="treeFolderHeader"></div>
+              <section class="tree-content-section">
+                <h3>Folders</h3>
+                <div class="compact-folder-list" id="treeChildFolders"></div>
+              </section>
+              <section class="tree-content-section">
+                <h3>Resources</h3>
+                <div class="compact-file-list" id="treeFiles"></div>
+              </section>
+            </section>
+          </div>
+        </section>
+
+        <section class="view-panel visual-view" id="visualView" aria-labelledby="visualHeading" hidden>
+          <section class="folder-shelf" aria-labelledby="childFoldersHeading">
+            <header>
+              <div>
+                <p class="section-kicker">Browse deeper</p>
+                <h2 id="childFoldersHeading">Child folders</h2>
+                <p id="childFolderCount"></p>
+              </div>
+              <button class="text-button" id="showAllFolders" type="button" hidden>Show all folders</button>
+            </header>
+            <div class="folder-grid" id="visualFolderGrid"></div>
+          </section>
+
+          <div class="visual-layout">
+            <aside class="ancestor-panel" aria-labelledby="ancestorHeading">
+              <h3 id="ancestorHeading">Location context</h3>
+              <nav class="ancestor-rail" id="ancestorRail" aria-label="Parent folders"></nav>
+            </aside>
+            <div class="visual-main">
+              <section class="folder-banner" id="currentFolderBanner" aria-labelledby="visualHeading"></section>
+              <div class="filter-slot" data-filter-slot="visual"></div>
+              <section class="visual-files-section">
+                <header>
+                  <div>
+                    <h3>Resources in this folder</h3>
+                    <p id="visualFilesSummary"></p>
+                  </div>
+                  <div class="layout-switch" role="group" aria-label="File layout">
+                    <button type="button" data-layout="grid" aria-label="Grid layout"><span class="icon icon-grid" aria-hidden="true"></span></button>
+                    <button type="button" data-layout="list" aria-label="List layout"><span class="icon icon-list" aria-hidden="true"></span></button>
+                  </div>
+                </header>
+                <div class="visual-files" id="visualFiles"></div>
+                <button class="button secondary show-more" id="showMoreFiles" type="button" hidden>Show more files</button>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <section class="filter-panel" id="filterPanel" aria-label="Catalog filters">
+          <div class="filter-primary">
+            <label>Module<select id="moduleFilter"></select></label>
+            <label>Material type<select id="typeFilter"></select></label>
+            <label>Status<select id="statusFilter"></select></label>
+            <button class="button secondary more-filters-toggle" id="moreFiltersToggle" type="button" aria-controls="moreFilters" aria-expanded="false">
+              <span class="icon icon-filter" aria-hidden="true"></span>More filters
+            </button>
+          </div>
+          <div class="filter-more" id="moreFilters" hidden>
+            <label>Resource type<select id="resourceKindFilter"><option value="">All resources</option><option value="file">Files</option><option value="web_app">Web apps</option></select></label>
+            <label>Topic<select id="topicFilter"></select></label>
+            <label>Audience<select id="audienceFilter"></select></label>
+            <label>Dependencies<select id="dependencyFilter"><option value="">All dependency states</option><option value="sensitive">Dependency-sensitive</option><option value="none">No detected dependencies</option></select></label>
+            <label>Confidence<select id="confidenceFilter"></select></label>
+          </div>
+          <div class="filter-status-row">
+            <div class="active-filters" id="activeFilters" aria-label="Active filters"></div>
+            <p id="recoveryHint">No matches? Clear filters or browse a collection.</p>
+            <button class="text-button" id="clearFilters" type="button">Clear filters</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <aside class="inspector" id="inspector" aria-labelledby="inspectorTitle" hidden>
+      <header class="inspector-header">
+        <div>
+          <p class="section-kicker" id="inspectorKicker">Selected file</p>
+          <h2 id="inspectorTitle">File details</h2>
+          <p id="inspectorSubtitle"></p>
+        </div>
+        <button class="icon-button" id="closeInspector" type="button" aria-label="Close file details"><span class="icon icon-close" aria-hidden="true"></span></button>
+      </header>
+      <div class="inspector-tabs" role="tablist" aria-label="File detail sections">
+        <button id="inspectorTabPreview" type="button" role="tab" data-inspector-tab="preview" aria-controls="inspectorPreview">Preview</button>
+        <button id="inspectorTabOverview" type="button" role="tab" data-inspector-tab="overview" aria-controls="inspectorOverview">Overview</button>
+        <button id="inspectorTabMetadata" type="button" role="tab" data-inspector-tab="metadata" aria-controls="inspectorMetadata">Course Metadata</button>
+        <button id="inspectorTabIntegrity" type="button" role="tab" data-inspector-tab="integrity" aria-controls="inspectorIntegrity"><span id="inspectorIntegrityLabel">Integrity &amp; Dependencies</span></button>
+      </div>
+      <div class="inspector-body">
+        <section id="inspectorPreview" role="tabpanel" aria-labelledby="inspectorTabPreview" tabindex="0"></section>
+        <section id="inspectorOverview" role="tabpanel" aria-labelledby="inspectorTabOverview" tabindex="0" hidden></section>
+        <section id="inspectorMetadata" role="tabpanel" aria-labelledby="inspectorTabMetadata" tabindex="0" hidden></section>
+        <section id="inspectorIntegrity" role="tabpanel" aria-labelledby="inspectorTabIntegrity" tabindex="0" hidden></section>
+      </div>
+      <footer class="inspector-actions">
+        <a class="button primary action-wide" id="webAppAction" href="#" hidden><span class="icon icon-external" aria-hidden="true"></span>Launch Web App</a>
+        <button class="button secondary action-wide" id="copyUrl" type="button" hidden><span class="icon icon-copy" aria-hidden="true"></span>Copy URL</button>
+        <a class="button primary action-wide" id="driveAction" href="#" hidden target="_blank" rel="noreferrer"><span class="icon icon-external" aria-hidden="true"></span>Open in Google Drive</a>
+        <a class="button secondary action-wide" id="cloudAction" href="#" hidden><span class="icon icon-external" aria-hidden="true"></span><span id="cloudActionLabel">Open in Google</span></a>
+        <p class="cloud-action-hint" id="cloudActionHint" aria-live="polite" hidden></p>
+      </footer>
+    </aside>
+  </div>
+
+  <div class="mobile-scrim" id="mobileScrim" hidden></div>
+  <dialog class="overview-dialog" id="overviewDialog" aria-labelledby="overviewTitle">
+    <header><h2 id="overviewTitle">Course library overview</h2><button class="icon-button" id="closeOverview" type="button" aria-label="Close overview"><span class="icon icon-close" aria-hidden="true"></span></button></header>
+    <div id="overviewContent"></div>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="data/catalog-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

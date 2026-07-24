@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "generated_utc": "2026-07-24T00:11:47.940Z",
+  "catalog_path": "../data/course-catalog.json",
+  "browser": {
+    "engine": "chromium",
+    "headless": true,
+    "fresh_context_per_navigation": true,
+    "executable": "C:\\Users\\darf3\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1223\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+    "initial_cookie_count": 0,
+    "host": "BorgBrain"
+  },
+  "settings": {
+    "concurrency": 5,
+    "timeout_ms": 12000,
+    "settle_ms": 700,
+    "transient_navigation_retries": 1
+  },
+  "elapsed_ms": 22836,
+  "preflight": {
+    "status": "passed",
+    "summary": {
+      "total": 5,
+      "accessible": 5,
+      "access_required": 0,
+      "error": 0,
+      "blocking": 0
+    },
+    "results": [
+      {
+        "category": "drive_file",
+        "id": "576c880a421e-0002",
+        "name": "Data Science GenAI Course Curriculum.pdf",
+        "url_field": "source_url",
+        "requested_url": "https://drive.google.com/file/d/16FiDuMGYJOvv6X9jIAcwgOqOlJn7neLo/view",
+        "final_url": "https://drive.google.com/file/d/16FiDuMGYJOvv6X9jIAcwgOqOlJn7neLo/view",
+        "http_status": 200,
+        "classification": "accessible",
+        "evidence": "Anonymous Google viewer/editor loaded with title \"Data Science GenAI Course Curriculum.pdf - Google Drive\".",
+        "attempt": 1,
+        "initial_cookie_count": 0,
+        "elapsed_ms": 4139
+      },
+      {
+        "category": "docs_document",
+        "id": "3779d7820338-0001",
+        "name": "# Course 2_ Python and Deep Learning Essentials.docx",
+        "url_field": "source_url",
+        "requested_url": "https://docs.google.com/document/d/1igcgBCSSC34YgzjSwrnK0vze7TCs_Wig/edit",
+        "final_url": "https://docs.google.com/document/d/1igcgBCSSC34YgzjSwrnK0vze7TCs_Wig/edit",
+        "http_status": 200,
+        "classification": "accessible",
+        "evidence": "Anonymous Google viewer/editor loaded with title \"# Course 2_ Python and Deep Learning Essentials.docx - Google Docs\".",
+        "attempt": 1,
+        "initial_cookie_count": 0,
+        "elapsed_ms": 5729
+      },
+      {
+        "category": "presentation",
+        "id": "ce8184f20a70-0031",
+        "name": "Welcome to GIT Intro_Day 1.pptx",
+        "url_field": "source_url",
+        "requested_url": "https://docs.google.com/presentation/d/18tj861yc7Ere5lEs5KeNgvuUPXwP4VkZ/edit",
+        "final_url": "https://docs.google.com/presentation/d/18tj861yc7Ere5lEs5KeNgvuUPXwP4VkZ/edit",
+        "http_status": 200,
+        "classification": "accessible",
+        "evidence": "Anonymous Google viewer/editor loaded with title \"Loading Google Slides\".",
+        "attempt": 1,
+        "initial_cookie_count": 0,
+        "elapsed_ms": 3958
+      },
+      {
+        "category": "spreadsheet",
+        "id": "43465a06f2cc-0487",
+        "name": "online_retail.xlsx",
+        "url_field": "source_url",
+        "requested_url": "https://docs.google.com/spreadsheets/d/1aEZ44PHyMUjt5byqF2Z0VDL2PramUCfn/edit",
+        "final_url": "https://docs.google.com/spreadsheets/d/1aEZ44PHyMUjt5byqF2Z0VDL2PramUCfn/edit?gid=757457958#gid=757457958",
+        "http_status": 200,
+        "classification": "accessible",
+        "evidence": "Anonymous Google viewer/editor loaded with title \"online_retail.xlsx - Google Sheets\".",
+        "attempt": 1,
+        "initial_cookie_count": 0,
+        "elapsed_ms": 8737
+      },
+      {
+        "category": "colab",
+        "id": "e7896ec1351f-0055",
+        "name": "CRISP_DM_Hands_on_Teaching_Notebook (1).ipynb",
+        "url_field": "launch_url",
+        "requested_url": "https://colab.research.google.com/drive/1W28o7L35x7EenXbHSUZVsdzwak7P998V",
+        "final_url": "https://colab.research.google.com/drive/1W28o7L35x7EenXbHSUZVsdzwak7P998V",
+        "http_status": 200,
+        "classification": "accessible",
+        "evidence": "Anonymous Google viewer/editor loaded with title \"Google Colab\".",
+        "attempt": 1,
+        "initial_cookie_count": 0,
+        "elapsed_ms": 4692
+      }
+    ]
+  },
+  "full_audit": null,
+  "release_gate": "passed"
+}
