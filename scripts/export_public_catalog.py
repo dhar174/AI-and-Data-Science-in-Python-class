@@ -521,7 +521,75 @@ def derive_summary(
     }
 
 
-def build_public_catalog(source_catalog, source_sha256, generated_utc=None):
+def load_denylist(path) -> frozenset[str]:
+    """Load stable public record IDs that must be excluded from delivery."""
+    path = Path(path)
+    value = json.loads(path.read_text(encoding="utf-8-sig"))
+    if not isinstance(value, dict) or value.get("version") != 1:
+        raise ValueError("Denylist must be an object with version 1.")
+    record_ids = value.get("record_ids")
+    if not isinstance(record_ids, list) or any(
+        not isinstance(record_id, str) or not record_id.strip()
+        for record_id in record_ids
+    ):
+        raise ValueError("Denylist record_ids must be a list of nonempty strings.")
+    normalized = [record_id.strip() for record_id in record_ids]
+    if len(normalized) != len(set(normalized)):
+        raise ValueError("Denylist record_ids must be unique.")
+    return frozenset(normalized)
+
+
+def _filter_records(records, denied_ids) -> list[dict]:
+    denied_ids = frozenset(denied_ids or ())
+    return [record for record in records if record.get("id") not in denied_ids]
+
+
+def _rebuild_public_payload(
+    records,
+    source_summary,
+    *,
+    generated_utc,
+    source_sha256,
+):
+    directories = derive_directories(records)
+    source_version = (
+        source_summary.get("catalog_version")
+        if isinstance(source_summary, dict)
+        else None
+    )
+    catalog_version = source_version if isinstance(source_version, int) else 4
+    summary = derive_summary(
+        records,
+        directories,
+        catalog_version=catalog_version,
+        generated_utc=_safe_text(generated_utc or _utc_now()),
+        source_sha256=source_sha256,
+    )
+    return {"summary": summary, "directories": directories, "records": records}
+
+
+def filter_public_catalog(public_catalog, denied_ids, generated_utc=None):
+    """Apply a denylist to an already-public catalog without reading its source."""
+    records = public_catalog.get("records")
+    if not isinstance(records, list) or not all(isinstance(record, dict) for record in records):
+        raise ValueError("Public catalog must contain an array of record objects.")
+    source_summary = public_catalog.get("summary")
+    source_sha256 = (
+        source_summary.get("source_catalog_sha256")
+        if isinstance(source_summary, dict)
+        else ""
+    )
+    if not isinstance(source_sha256, str) or not source_sha256:
+        raise ValueError("Public catalog summary must contain source_catalog_sha256.")
+    return _rebuild_public_payload(
+        _filter_records(records, denied_ids),
+        source_summary,
+        generated_utc=generated_utc,
+        source_sha256=source_sha256,
+    )
+
+
+def build_public_catalog(source_catalog, source_sha256, generated_utc=None, denied_ids=None):
     """Build a public payload exclusively from explicitly allowlisted fields."""
     source_records = source_catalog.get("records")
     if not isinstance(source_records, list):
@@ -534,36 +602,18 @@ def build_public_catalog(source_catalog, source_sha256, generated_utc=None):
             records.append(_sanitize_file(record))
         elif web_app_is_approved(record):
             records.append(_sanitize_web_app(record))
-    directories = derive_directories(records)
     source_summary = source_catalog.get("summary")
-    source_version = (
-        source_summary.get("catalog_version")
-        if isinstance(source_summary, dict)
-        else None
-    )
-    catalog_version = source_version if isinstance(source_version, int) else 4
-    timestamp = _safe_text(generated_utc or _utc_now())
-    summary = derive_summary(
-        records,
-        directories,
-        catalog_version=catalog_version,
-        generated_utc=timestamp,
+    return _rebuild_public_payload(
+        _filter_records(records, denied_ids),
+        source_summary,
+        generated_utc=generated_utc,
         source_sha256=source_sha256,
     )
-    return {"summary": summary, "directories": directories, "records": records}
 
 
-def export_catalog(source_path, json_path, js_path, generated_utc=None):
-    source_path = Path(source_path)
+def write_catalog_payload(payload, json_path, js_path):
     json_path = Path(json_path)
     js_path = Path(js_path)
-    source_bytes = source_path.read_bytes()
-    source_catalog = json.loads(source_bytes.decode("utf-8-sig"))
-    payload = build_public_catalog(
-        source_catalog,
-        hashlib.sha256(source_bytes).hexdigest().upper(),
-        generated_utc=generated_utc,
-    )
     json_path.parent.mkdir(parents=True, exist_ok=True)
     js_path.parent.mkdir(parents=True, exist_ok=True)
     json_path.write_bytes(
@@ -576,6 +626,22 @@ def export_catalog(source_path, json_path, js_path, generated_utc=None):
             + ";\n"
         ).encode("utf-8")
     )
+
+
+def export_catalog(source_path, json_path, js_path, generated_utc=None, denylist_path=None):
+    source_path = Path(source_path)
+    json_path = Path(json_path)
+    js_path = Path(js_path)
+    source_bytes = source_path.read_bytes()
+    source_catalog = json.loads(source_bytes.decode("utf-8-sig"))
+    denied_ids = load_denylist(denylist_path) if denylist_path else ()
+    payload = build_public_catalog(
+        source_catalog,
+        hashlib.sha256(source_bytes).hexdigest().upper(),
+        generated_utc=generated_utc,
+        denied_ids=denied_ids,
+    )
+    write_catalog_payload(payload, json_path, js_path)
     return payload
 
 
@@ -592,8 +658,19 @@ def main(argv=None) -> int:
         type=Path,
         default=Path("data/catalog-data.js"),
     )
+    parser.add_argument(
+        "--denylist",
+        type=Path,
+        default=None,
+        help="Optional public denylist JSON file containing record IDs to exclude.",
+    )
     args = parser.parse_args(argv)
-    payload = export_catalog(args.source, args.json_output, args.js_output)
+    payload = export_catalog(
+        args.source,
+        args.json_output,
+        args.js_output,
+        denylist_path=args.denylist,
+    )
     summary = payload["summary"]
     print(
         f"Exported {summary['total_files']} files + "

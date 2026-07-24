@@ -32,3 +32,17 @@ Run this workflow after the private source catalog changes:
 9. Verify the production URL, console, public catalog, representative Drive links, and external web apps.
 
 Drive permissions are never changed by this repository workflow.
+
+## Online-only denylist
+
+To hide a record from the public site without changing the offline catalog:
+
+1. Add its stable `id` to `data/public-denylist.json`.
+2. Run `py -3 scripts/apply_public_denylist.py` from this checkout.
+3. Run `py -3 scripts/verify_public_catalog.py --denylist data/public-denylist.json`.
+4. Commit and push the public checkout.
+
+The public-only command reads the existing public catalog and rewrites both
+`data/course-catalog.json` and `data/catalog-data.js`. It never writes to the
+offline course-library folder. Full source-based exports should also pass
+`--denylist data/public-denylist.json` so hidden records do not return later.

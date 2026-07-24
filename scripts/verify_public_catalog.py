@@ -18,6 +18,7 @@ from export_public_catalog import (
     derive_summary,
     forbidden_public_text_kind,
     is_safe_catalog_path,
+    load_denylist,
     normalize_google_url,
     web_app_is_approved,
 )
@@ -256,7 +257,7 @@ def _check_directories(payload, errors):
         errors.append("$.directories: directory mismatch with filtered records")
 
 
-def verify_catalog(payload, js_payload=None):
+def verify_catalog(payload, js_payload=None, denylist=None):
     errors = []
     if not isinstance(payload, dict):
         return ["$: catalog payload must be an object"]
@@ -269,15 +270,23 @@ def verify_catalog(payload, js_payload=None):
     _check_forbidden_content(payload, errors)
     _check_urls(payload, errors)
     _check_record_shapes(records, errors)
+    if denylist:
+        denied_ids = set(denylist)
+        present = sorted(
+            record.get("id") for record in records if record.get("id") in denied_ids
+        )
+        if present:
+            errors.append(f"$.records: denylisted record(s) present: {present}")
     _check_summary(payload, errors)
     _check_directories(payload, errors)
     return errors
 
 
-def verify_files(json_path, js_path):
+def verify_files(json_path, js_path, denylist_path=None):
     payload = json.loads(Path(json_path).read_text(encoding="utf-8"))
     js_payload = load_js_payload(js_path)
-    return payload, verify_catalog(payload, js_payload)
+    denylist = load_denylist(denylist_path) if denylist_path else None
+    return payload, verify_catalog(payload, js_payload, denylist)
 
 
 def main(argv=None) -> int:
@@ -294,8 +303,15 @@ def main(argv=None) -> int:
         nargs="?",
         default=Path("data/catalog-data.js"),
     )
+    parser.add_argument(
+        "--denylist",
+        type=Path,
+        default=Path("data/public-denylist.json"),
+        help="Optional denylist JSON file whose IDs must be absent from the catalog.",
+    )
     args = parser.parse_args(argv)
-    payload, errors = verify_files(args.json_path, args.js_path)
+    denylist_path = args.denylist if args.denylist.exists() else None
+    payload, errors = verify_files(args.json_path, args.js_path, denylist_path)
     if errors:
         for error in errors:
             print(f"ERROR: {error}")
