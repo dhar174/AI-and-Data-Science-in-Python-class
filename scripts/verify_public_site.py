@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -16,6 +17,7 @@ REQUIRED_FILES = (
     ".nojekyll",
     "README.md",
     "index.html",
+    "class-plan.html",
     "styles.css",
     "app.js",
     "data/catalog-data.js",
@@ -24,6 +26,7 @@ REQUIRED_FILES = (
 DEPLOYABLE_TEXT = (
     "README.md",
     "index.html",
+    "class-plan.html",
     "styles.css",
     "app.js",
 )
@@ -65,6 +68,89 @@ BINARY_SUFFIXES = {
 }
 WINDOWS_PATH = re.compile(r"(?i)(?<![a-z0-9])(?:[a-z]:[\\/](?!/)|\\\\[^\\/\s]+[\\/])")
 FILE_URL = re.compile(r"(?i)\bfile:(?:/{1,3}|\\)")
+EXPECTED_CLASS_PLAN_SOURCE_HASHES = {
+    "schedule-sha256": "3796db6c041317f195ca5c26e6a5068d5fd7f0a36513897837ff229936041dc5",
+    "syllabus-sha256": "522ab70c1eca4f8d817d62702c0dd313770901666b972bdcea40a46eb9137887",
+}
+EXPECTED_CLASS_PLAN_SHA256 = "7e0b7e5971e14eba92915db12cb3e17e27d07b368202d5176c20c7001e29ab6e"
+
+
+class ClassPlanNavigationParser(HTMLParser):
+    """Collect real class-plan anchors and whether they occur in the Views section."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.section_stack: list[bool] = []
+        self.anchors: list[dict[str, object]] = []
+        self.current_anchor: dict[str, object] | None = None
+        self.errors: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "section":
+            values = dict(attrs)
+            classes = (values.get("class") or "").split()
+            is_views = "nav-group" in classes and values.get("aria-labelledby") == "viewsLabel"
+            self.section_stack.append(is_views)
+            return
+        if tag != "a":
+            return
+        seen: set[str] = set()
+        duplicate_names: set[str] = set()
+        for name, _value in attrs:
+            if name in seen:
+                duplicate_names.add(name)
+            seen.add(name)
+        if duplicate_names:
+            self.errors.append(
+                "index.html anchor contains duplicate attribute name(s): "
+                + ", ".join(sorted(duplicate_names))
+            )
+            self.current_anchor = None
+            return
+        values = dict(attrs)
+        if values.get("href") == "class-plan.html":
+            anchor: dict[str, object] = {
+                "attrs": values,
+                "inside_views": any(self.section_stack),
+                "text": "",
+            }
+            self.anchors.append(anchor)
+            self.current_anchor = anchor
+
+    def handle_data(self, data: str) -> None:
+        if self.current_anchor is not None:
+            self.current_anchor["text"] = str(self.current_anchor["text"]) + data
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "a":
+            self.current_anchor = None
+        if tag == "section" and self.section_stack:
+            self.section_stack.pop()
+
+
+def validate_class_plan_navigation(index_html: str) -> list[str]:
+    parser = ClassPlanNavigationParser()
+    parser.feed(index_html)
+    parser.close()
+    errors = list(parser.errors)
+    if len(parser.anchors) != 1:
+        errors.append("index.html must contain exactly one class-plan.html link")
+    views_anchors = [anchor for anchor in parser.anchors if anchor["inside_views"]]
+    if len(views_anchors) != 1:
+        errors.append("index.html class-plan.html link must appear exactly once inside Views")
+    if len(parser.anchors) == 1:
+        anchor = parser.anchors[0]
+        attrs = anchor["attrs"]
+        assert isinstance(attrs, dict)
+        if "Class Plan & Schedule" not in " ".join(str(anchor["text"]).split()):
+            errors.append("index.html Class Plan & Schedule navigation text is missing")
+        classes = (attrs.get("class") or "").split()
+        style = (attrs.get("style") or "").replace(" ", "").casefold()
+        if "nav-item" not in classes or "text-decoration:none" not in style:
+            errors.append("Class Plan & Schedule navigation must use local nav-item styling")
+        if "data-view" in attrs:
+            errors.append("Class Plan & Schedule navigation must not use data-view")
+    return errors
 
 
 class AssetParser(HTMLParser):
@@ -126,23 +212,65 @@ def verify(root: Path) -> list[str]:
         if marker in combined_ui:
             errors.append(f"public UI contains forbidden marker: {marker}")
 
-    parser = AssetParser()
-    parser.feed(index)
-    for attribute, value in parser.assets:
-        if value.startswith(("https://", "data:", "#")):
-            continue
-        parsed = urlsplit(value)
-        if parsed.scheme or value.startswith(("/", "../")) or "/../" in value:
-            errors.append(f"index.html: unsafe {attribute} asset path: {value}")
-            continue
-        asset = (root / parsed.path).resolve()
-        try:
-            asset.relative_to(root.resolve())
-        except ValueError:
-            errors.append(f"index.html: asset escapes checkout: {value}")
-            continue
-        if not asset.is_file():
-            errors.append(f"index.html: referenced asset does not exist: {value}")
+    for relative in ("index.html", "class-plan.html"):
+        parser = AssetParser()
+        parser.feed(readable.get(relative, ""))
+        for attribute, value in parser.assets:
+            if value.startswith(("https://", "data:", "#")):
+                continue
+            parsed = urlsplit(value)
+            if parsed.scheme or value.startswith(("/", "../")) or "/../" in value:
+                errors.append(f"{relative}: unsafe {attribute} asset path: {value}")
+                continue
+            asset = (root / parsed.path).resolve()
+            try:
+                asset.relative_to(root.resolve())
+            except ValueError:
+                errors.append(f"{relative}: asset escapes checkout: {value}")
+                continue
+            if not asset.is_file():
+                errors.append(f"{relative}: referenced asset does not exist: {value}")
+
+    errors.extend(validate_class_plan_navigation(index))
+
+    class_plan = readable.get("class-plan.html", "")
+    if class_plan:
+        for marker in (
+            'href="index.html"',
+            'schedule-sha256',
+            'syllabus-sha256',
+            "At a glance",
+            "Three-module roadmap",
+            "Nine-week summary",
+            "Compact 33-session schedule",
+            "Daily class details",
+            "Course expectations",
+        ):
+            if marker not in class_plan:
+                errors.append(f"class-plan.html: missing required contract: {marker}")
+        if class_plan.count('class="session-detail"') != 33:
+            errors.append("class-plan.html: must contain exactly 33 session-detail sections")
+        if "<script" in class_plan.casefold() or 'rel="stylesheet"' in class_plan.casefold() or re.search(r"\bsrc=", class_plan, re.IGNORECASE):
+            errors.append("class-plan.html: must be self-contained without scripts or external assets")
+        for name, expected in EXPECTED_CLASS_PLAN_SOURCE_HASHES.items():
+            if f'<meta name="{name}" content="{expected}">' not in class_plan:
+                errors.append(f"class-plan.html: {name} does not match the expected promoted source")
+        class_plan_path = root / "class-plan.html"
+        actual_class_plan_hash = hashlib.sha256(class_plan_path.read_bytes()).hexdigest()
+        if actual_class_plan_hash != EXPECTED_CLASS_PLAN_SHA256:
+            errors.append("class-plan.html SHA-256 does not match the deterministic approved page")
+        for forbidden in (
+            "retrieval_questions", "worked_example", "modelling_steps", "hinge_question", "hinge_rule",
+            "required_resource_ids", "featured_optional_ids", "scheduled_resource_count",
+            "scheduled_optional_count", "scheduled_instructor_count", "absolute_path", "relative_path",
+            "review_note", "Instructor-only",
+        ):
+            if forbidden in class_plan:
+                errors.append(f"class-plan.html: exposes private/internal content: {forbidden}")
+        if re.search(r"web-[0-9a-f]{12,}", class_plan, re.IGNORECASE):
+            errors.append("class-plan.html: exposes an internal web activity ID")
+        if re.search(r"\b[0-9a-f]{12}-\d{4}\b", class_plan, re.IGNORECASE):
+            errors.append("class-plan.html: exposes an internal stable ID")
 
     for value in re.findall(r"url\((?:['\"]?)([^)'\"\s]+)", readable.get("styles.css", "")):
         if value.startswith(("https://", "data:", "#")):
