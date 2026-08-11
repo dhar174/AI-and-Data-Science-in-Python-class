@@ -18,6 +18,10 @@ REQUIRED_FILES = (
     "README.md",
     "index.html",
     "class-plan.html",
+    "student-guides.html",
+    "student-day-01.html",
+    "student-guides.css",
+    "student-guides.js",
     "styles.css",
     "app.js",
     "data/catalog-data.js",
@@ -27,6 +31,10 @@ DEPLOYABLE_TEXT = (
     "README.md",
     "index.html",
     "class-plan.html",
+    "student-guides.html",
+    "student-day-01.html",
+    "student-guides.css",
+    "student-guides.js",
     "styles.css",
     "app.js",
 )
@@ -73,13 +81,38 @@ EXPECTED_CLASS_PLAN_SOURCE_HASHES = {
     "syllabus-sha256": "522ab70c1eca4f8d817d62702c0dd313770901666b972bdcea40a46eb9137887",
 }
 EXPECTED_CLASS_PLAN_SHA256 = "7e0b7e5971e14eba92915db12cb3e17e27d07b368202d5176c20c7001e29ab6e"
+EXPECTED_DAY_ONE_PHASES = (
+    ("orientation", "5:30–6:10 p.m."),
+    ("analytic-approaches", "6:10–6:35 p.m."),
+    ("guided-practice", "6:35–7:25 p.m."),
+    ("capstone-domains", "7:25–7:55 p.m."),
+    ("break", "7:55–8:25 p.m."),
+    ("case-study-lab", "8:25–9:20 p.m."),
+    ("assessment", "9:20–9:50 p.m."),
+    ("exit", "9:50–10:00 p.m."),
+)
+STUDENT_GUIDE_EXTERNAL_HOSTS = {"docs.google.com", "colab.research.google.com"}
+STUDENT_GUIDE_FORBIDDEN = (
+    "retrieval_questions",
+    "worked_example",
+    "modelling_steps",
+    "hinge_question",
+    "hinge_rule",
+    "required_resource_ids",
+    "featured_optional_ids",
+    "absolute_path",
+    "relative_path",
+    "review_note",
+    "Instructor-only",
+)
 
 
 class ClassPlanNavigationParser(HTMLParser):
-    """Collect real class-plan anchors and whether they occur in the Views section."""
+    """Collect real target anchors and whether they occur in the Views section."""
 
-    def __init__(self) -> None:
+    def __init__(self, target_href: str = "class-plan.html") -> None:
         super().__init__(convert_charrefs=True)
+        self.target_href = target_href
         self.section_stack: list[bool] = []
         self.anchors: list[dict[str, object]] = []
         self.current_anchor: dict[str, object] | None = None
@@ -108,7 +141,7 @@ class ClassPlanNavigationParser(HTMLParser):
             self.current_anchor = None
             return
         values = dict(attrs)
-        if values.get("href") == "class-plan.html":
+        if values.get("href") == self.target_href:
             anchor: dict[str, object] = {
                 "attrs": values,
                 "inside_views": any(self.section_stack),
@@ -128,29 +161,37 @@ class ClassPlanNavigationParser(HTMLParser):
             self.section_stack.pop()
 
 
-def validate_class_plan_navigation(index_html: str) -> list[str]:
-    parser = ClassPlanNavigationParser()
+def validate_navigation_link(index_html: str, href: str, label: str) -> list[str]:
+    parser = ClassPlanNavigationParser(href)
     parser.feed(index_html)
     parser.close()
     errors = list(parser.errors)
     if len(parser.anchors) != 1:
-        errors.append("index.html must contain exactly one class-plan.html link")
+        errors.append(f"index.html must contain exactly one {href} link")
     views_anchors = [anchor for anchor in parser.anchors if anchor["inside_views"]]
     if len(views_anchors) != 1:
-        errors.append("index.html class-plan.html link must appear exactly once inside Views")
+        errors.append(f"index.html {href} link must appear exactly once inside Views")
     if len(parser.anchors) == 1:
         anchor = parser.anchors[0]
         attrs = anchor["attrs"]
         assert isinstance(attrs, dict)
-        if "Class Plan & Schedule" not in " ".join(str(anchor["text"]).split()):
-            errors.append("index.html Class Plan & Schedule navigation text is missing")
+        if label not in " ".join(str(anchor["text"]).split()):
+            errors.append(f"index.html {label} navigation text is missing")
         classes = (attrs.get("class") or "").split()
         style = (attrs.get("style") or "").replace(" ", "").casefold()
         if "nav-item" not in classes or "text-decoration:none" not in style:
-            errors.append("Class Plan & Schedule navigation must use local nav-item styling")
+            errors.append(f"{label} navigation must use local nav-item styling")
         if "data-view" in attrs:
-            errors.append("Class Plan & Schedule navigation must not use data-view")
+            errors.append(f"{label} navigation must not use data-view")
     return errors
+
+
+def validate_class_plan_navigation(index_html: str) -> list[str]:
+    return validate_navigation_link(index_html, "class-plan.html", "Class Plan & Schedule")
+
+
+def validate_student_guides_navigation(index_html: str) -> list[str]:
+    return validate_navigation_link(index_html, "student-guides.html", "Student Day Guides")
 
 
 class AssetParser(HTMLParser):
@@ -164,6 +205,137 @@ class AssetParser(HTMLParser):
             value = values.get(attribute)
             if value:
                 self.assets.append((attribute, value))
+
+
+class StudentGuideContractParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.day_entries: list[dict[str, object]] = []
+        self.current_day: dict[str, object] | None = None
+        self.phases: list[dict[str, object]] = []
+        self.current_phase: dict[str, object] | None = None
+        self.in_summary = False
+        self.external_links: list[dict[str, str | None]] = []
+        self.errors: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        names = [name for name, _value in attrs]
+        duplicates = sorted(name for name in set(names) if names.count(name) > 1)
+        if duplicates:
+            self.errors.append(
+                "student guide contains duplicate attribute name(s): "
+                + ", ".join(duplicates)
+            )
+            return
+        values = dict(attrs)
+        classes = set((values.get("class") or "").split())
+        if tag == "li" and "day-entry" in classes:
+            self.current_day = {"text": "", "statuses": set(), "hrefs": []}
+        elif self.current_day is not None and tag == "span":
+            statuses = self.current_day["statuses"]
+            assert isinstance(statuses, set)
+            statuses.update(classes & {"ready", "soon"})
+        if self.current_day is not None and tag == "a" and values.get("href"):
+            hrefs = self.current_day["hrefs"]
+            assert isinstance(hrefs, list)
+            hrefs.append(values["href"])
+        if tag == "details" and "phase-card" in classes:
+            self.current_phase = {
+                "id": values.get("id"),
+                "classes": classes,
+                "summary": "",
+            }
+        elif self.current_phase is not None and tag == "summary":
+            self.in_summary = True
+        href = values.get("href")
+        if tag == "a" and href and href.startswith("https://"):
+            self.external_links.append(values)
+
+    def handle_data(self, data: str) -> None:
+        if self.current_day is not None:
+            self.current_day["text"] = str(self.current_day["text"]) + " " + data
+        if self.current_phase is not None and self.in_summary:
+            self.current_phase["summary"] = str(self.current_phase["summary"]) + " " + data
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "li" and self.current_day is not None:
+            self.day_entries.append(self.current_day)
+            self.current_day = None
+        elif tag == "summary":
+            self.in_summary = False
+        elif tag == "details" and self.current_phase is not None:
+            self.phases.append(self.current_phase)
+            self.current_phase = None
+
+
+def parse_student_guide(document: str) -> StudentGuideContractParser:
+    parser = StudentGuideContractParser()
+    parser.feed(document)
+    parser.close()
+    return parser
+
+
+def validate_student_guides_hub(document: str) -> list[str]:
+    parser = parse_student_guide(document)
+    errors = list(parser.errors)
+    if len(parser.day_entries) != 33:
+        errors.append("student-guides.html must contain exactly 33 day entries")
+        return errors
+    day_numbers = []
+    for entry in parser.day_entries:
+        match = re.search(r"\bDay\s+(\d+)\b", " ".join(str(entry["text"]).split()))
+        day_numbers.append(int(match.group(1)) if match else None)
+    if day_numbers != list(range(1, 34)):
+        errors.append("student-guides.html day entries must be ordered Day 1 through Day 33")
+    ready = [entry for entry in parser.day_entries if "ready" in entry["statuses"]]
+    soon = [entry for entry in parser.day_entries if "soon" in entry["statuses"]]
+    if len(ready) != 1:
+        errors.append("student-guides.html must contain exactly one Ready day")
+    if len(soon) != 32:
+        errors.append("student-guides.html must contain exactly 32 Coming soon days")
+    if len(ready) == 1 and ready[0]["hrefs"] != ["student-day-01.html"]:
+        errors.append("student-guides.html Ready day must link only to student-day-01.html")
+    if any(entry["hrefs"] for entry in soon):
+        errors.append("student-guides.html Coming soon days must not be links")
+    return errors
+
+
+def validate_student_day_one(document: str) -> list[str]:
+    parser = parse_student_guide(document)
+    errors = list(parser.errors)
+    expected_ids = [phase_id for phase_id, _time_range in EXPECTED_DAY_ONE_PHASES]
+    actual_ids = [phase["id"] for phase in parser.phases]
+    if actual_ids != expected_ids:
+        errors.append("student-day-01.html must contain the eight ordered Day 1 phases")
+    if len(parser.phases) == len(EXPECTED_DAY_ONE_PHASES):
+        for phase, (_phase_id, time_range) in zip(parser.phases, EXPECTED_DAY_ONE_PHASES):
+            if time_range not in str(phase["summary"]):
+                errors.append(
+                    f"student-day-01.html phase {phase['id']!r} is missing time {time_range}"
+                )
+    break_phases = [
+        phase for phase in parser.phases if "break-phase" in phase["classes"]
+    ]
+    if len(break_phases) != 1 or break_phases[0]["id"] != "break":
+        errors.append("student-day-01.html must contain one protected break phase")
+    if "Break: 7:55–8:25 p.m." not in document:
+        errors.append("student-day-01.html is missing the protected break banner")
+    unique_urls = {
+        attributes["href"]
+        for attributes in parser.external_links
+        if attributes.get("href")
+    }
+    if len(unique_urls) != 5:
+        errors.append("student-day-01.html must contain exactly five unique external resource links")
+    for attributes in parser.external_links:
+        href = attributes.get("href") or ""
+        host = (urlsplit(href).hostname or "").lower()
+        rel = set((attributes.get("rel") or "").split())
+        if host not in STUDENT_GUIDE_EXTERNAL_HOSTS:
+            errors.append(f"student-day-01.html uses an unapproved external host: {host!r}")
+        if attributes.get("target") != "_blank" or not {"noopener", "noreferrer"}.issubset(rel):
+            errors.append("student-day-01.html external links must open safely in a new tab")
+    return errors
 
 
 def catalog_keys(value):
@@ -212,7 +384,12 @@ def verify(root: Path) -> list[str]:
         if marker in combined_ui:
             errors.append(f"public UI contains forbidden marker: {marker}")
 
-    for relative in ("index.html", "class-plan.html"):
+    for relative in (
+        "index.html",
+        "class-plan.html",
+        "student-guides.html",
+        "student-day-01.html",
+    ):
         parser = AssetParser()
         parser.feed(readable.get(relative, ""))
         for attribute, value in parser.assets:
@@ -232,6 +409,30 @@ def verify(root: Path) -> list[str]:
                 errors.append(f"{relative}: referenced asset does not exist: {value}")
 
     errors.extend(validate_class_plan_navigation(index))
+    errors.extend(validate_student_guides_navigation(index))
+
+    student_guides = readable.get("student-guides.html", "")
+    student_day_one = readable.get("student-day-01.html", "")
+    if student_guides:
+        errors.extend(validate_student_guides_hub(student_guides))
+    if student_day_one:
+        errors.extend(validate_student_day_one(student_day_one))
+    combined_student_guides = "\n".join(
+        readable.get(relative, "")
+        for relative in (
+            "student-guides.html",
+            "student-day-01.html",
+            "student-guides.css",
+            "student-guides.js",
+        )
+    )
+    for forbidden in STUDENT_GUIDE_FORBIDDEN:
+        if forbidden in combined_student_guides:
+            errors.append(f"student guides expose private/internal content: {forbidden}")
+    if re.search(r"web-[0-9a-f]{12,}", combined_student_guides, re.IGNORECASE):
+        errors.append("student guides expose an internal web activity ID")
+    if re.search(r"\b[0-9a-f]{12}-\d{4}\b", combined_student_guides, re.IGNORECASE):
+        errors.append("student guides expose an internal stable ID")
 
     class_plan = readable.get("class-plan.html", "")
     if class_plan:
@@ -272,11 +473,12 @@ def verify(root: Path) -> list[str]:
         if re.search(r"\b[0-9a-f]{12}-\d{4}\b", class_plan, re.IGNORECASE):
             errors.append("class-plan.html: exposes an internal stable ID")
 
-    for value in re.findall(r"url\((?:['\"]?)([^)'\"\s]+)", readable.get("styles.css", "")):
-        if value.startswith(("https://", "data:", "#")):
-            continue
-        if value.startswith(("/", "../")) or "/../" in value:
-            errors.append(f"styles.css: unsafe asset path: {value}")
+    for relative in ("styles.css", "student-guides.css"):
+        for value in re.findall(r"url\((?:['\"]?)([^)'\"\s]+)", readable.get(relative, "")):
+            if value.startswith(("https://", "data:", "#")):
+                continue
+            if value.startswith(("/", "../")) or "/../" in value:
+                errors.append(f"{relative}: unsafe asset path: {value}")
 
     catalog_path = root / "data" / "course-catalog.json"
     if catalog_path.is_file():
