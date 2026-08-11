@@ -12,8 +12,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ClassPlanAnchorParser(HTMLParser):
-    def __init__(self):
+    def __init__(self, target_href="class-plan.html"):
         super().__init__(convert_charrefs=True)
+        self.target_href = target_href
         self.section_stack = []
         self.anchors = []
 
@@ -23,12 +24,59 @@ class ClassPlanAnchorParser(HTMLParser):
             classes = (values.get("class") or "").split()
             is_views = "nav-group" in classes and values.get("aria-labelledby") == "viewsLabel"
             self.section_stack.append(is_views or any(self.section_stack))
-        if tag == "a" and values.get("href") == "class-plan.html":
+        if tag == "a" and values.get("href") == self.target_href:
             self.anchors.append((values, any(self.section_stack)))
 
     def handle_endtag(self, tag):
         if tag == "section" and self.section_stack:
             self.section_stack.pop()
+
+
+class StudentGuideParser(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.day_entries = []
+        self.current_day = None
+        self.phases = []
+        self.current_phase = None
+        self.in_summary = False
+        self.external_links = []
+
+    def handle_starttag(self, tag, attrs):
+        values = dict(attrs)
+        classes = set((values.get("class") or "").split())
+        if tag == "li" and "day-entry" in classes:
+            self.current_day = {"text": "", "statuses": set(), "hrefs": []}
+        elif self.current_day is not None and tag == "span":
+            self.current_day["statuses"].update(classes & {"ready", "soon"})
+        if self.current_day is not None and tag == "a" and values.get("href"):
+            self.current_day["hrefs"].append(values["href"])
+        if tag == "details" and "phase-card" in classes:
+            self.current_phase = {
+                "id": values.get("id"),
+                "classes": classes,
+                "summary": "",
+            }
+        elif self.current_phase is not None and tag == "summary":
+            self.in_summary = True
+        if tag == "a" and (values.get("href") or "").startswith("https://"):
+            self.external_links.append(values)
+
+    def handle_data(self, data):
+        if self.current_day is not None:
+            self.current_day["text"] += " " + data
+        if self.current_phase is not None and self.in_summary:
+            self.current_phase["summary"] += " " + data
+
+    def handle_endtag(self, tag):
+        if tag == "li" and self.current_day is not None:
+            self.day_entries.append(self.current_day)
+            self.current_day = None
+        elif tag == "summary":
+            self.in_summary = False
+        elif tag == "details" and self.current_phase is not None:
+            self.phases.append(self.current_phase)
+            self.current_phase = None
 
 
 class PublicUiTests(unittest.TestCase):
@@ -38,6 +86,8 @@ class PublicUiTests(unittest.TestCase):
         cls.app = (ROOT / "app.js").read_text(encoding="utf-8")
         class_plan = ROOT / "class-plan.html"
         cls.class_plan = class_plan.read_text(encoding="utf-8") if class_plan.is_file() else ""
+        cls.student_guides = (ROOT / "student-guides.html").read_text(encoding="utf-8")
+        cls.student_day_01 = (ROOT / "student-day-01.html").read_text(encoding="utf-8")
 
     def test_public_navigation_and_footer_exclude_private_surfaces(self):
         self.assertNotIn('data-mode="Instructor"', self.index)
@@ -71,6 +121,157 @@ class PublicUiTests(unittest.TestCase):
         self.assertIn("nav-item", attributes.get("class", "").split())
         self.assertIn("text-decoration:none", attributes.get("style", "").replace(" ", ""))
         self.assertNotIn("data-view", attributes)
+
+    def test_student_guides_navigation_is_a_single_relative_non_view_link(self):
+        parser = ClassPlanAnchorParser("student-guides.html")
+        parser.feed(self.index)
+        self.assertEqual(1, len(parser.anchors))
+        attributes, inside_views = parser.anchors[0]
+        self.assertTrue(inside_views)
+        self.assertIn("nav-item", attributes.get("class", "").split())
+        self.assertIn("text-decoration:none", attributes.get("style", "").replace(" ", ""))
+        self.assertNotIn("data-view", attributes)
+        anchors = re.findall(
+            r'<a\b([^>]*)href="student-guides\.html"([^>]*)>(.*?)</a>',
+            self.index,
+            re.DOTALL,
+        )
+        self.assertIn("Student Day Guides", anchors[0][2])
+
+    def test_public_verifier_rejects_student_guides_navigation_attacks(self):
+        anchor = re.search(
+            r'<a\b[^>]*href="student-guides\.html"[^>]*>.*?</a>',
+            self.index,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(anchor)
+        malformed_anchor = anchor.group(0).replace(
+            'href="student-guides.html"',
+            'href="index.html" href="student-guides.html"',
+            1,
+        )
+        mutations = (
+            self.index.replace(anchor.group(0), f"<!-- {anchor.group(0)} -->", 1),
+            self.index.replace("</body>", "<a href='student-guides.html'>Duplicate</a></body>", 1),
+            self.index.replace(anchor.group(0), malformed_anchor, 1),
+        )
+        for number, mutated in enumerate(mutations):
+            with self.subTest(mutation=number), tempfile.TemporaryDirectory() as temp_dir:
+                copy = Path(temp_dir) / "site"
+                shutil.copytree(ROOT, copy, ignore=shutil.ignore_patterns(".git"))
+                (copy / "index.html").write_text(mutated, encoding="utf-8")
+                result = subprocess.run(
+                    [sys.executable, str(copy / "scripts" / "verify_public_site.py"), "--root", str(copy)],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                output = result.stdout + result.stderr
+                self.assertNotEqual(0, result.returncode, output)
+                self.assertIn("student-guides.html", output)
+
+    def test_student_guide_hub_has_exact_day_status_contract(self):
+        parser = StudentGuideParser()
+        parser.feed(self.student_guides)
+        self.assertEqual(33, len(parser.day_entries))
+        self.assertEqual(
+            [f"Day {number}" for number in range(1, 34)],
+            [
+                " ".join(" ".join(entry["text"].split()).split(" ", 2)[:2])
+                for entry in parser.day_entries
+            ],
+        )
+        ready = [entry for entry in parser.day_entries if "ready" in entry["statuses"]]
+        soon = [entry for entry in parser.day_entries if "soon" in entry["statuses"]]
+        self.assertEqual(1, len(ready))
+        self.assertEqual(32, len(soon))
+        self.assertEqual(["student-day-01.html"], ready[0]["hrefs"])
+        self.assertTrue(all(not entry["hrefs"] for entry in soon))
+
+    def test_day_one_has_eight_phases_break_times_and_five_external_links(self):
+        parser = StudentGuideParser()
+        parser.feed(self.student_day_01)
+        expected = (
+            ("orientation", "5:30–6:10 p.m."),
+            ("analytic-approaches", "6:10–6:35 p.m."),
+            ("guided-practice", "6:35–7:25 p.m."),
+            ("capstone-domains", "7:25–7:55 p.m."),
+            ("break", "7:55–8:25 p.m."),
+            ("case-study-lab", "8:25–9:20 p.m."),
+            ("assessment", "9:20–9:50 p.m."),
+            ("exit", "9:50–10:00 p.m."),
+        )
+        self.assertEqual(
+            [phase_id for phase_id, _ in expected],
+            [phase["id"] for phase in parser.phases],
+        )
+        for phase, (_, time_range) in zip(parser.phases, expected):
+            self.assertIn(time_range, phase["summary"])
+        break_phases = [
+            phase for phase in parser.phases if "break-phase" in phase["classes"]
+        ]
+        self.assertEqual(1, len(break_phases))
+        self.assertEqual("break", break_phases[0]["id"])
+        unique_urls = {attributes["href"] for attributes in parser.external_links}
+        self.assertEqual(5, len(unique_urls))
+        for attributes in parser.external_links:
+            self.assertEqual("_blank", attributes.get("target"))
+            self.assertTrue(
+                {"noopener", "noreferrer"}.issubset(
+                    set(attributes.get("rel", "").split())
+                )
+            )
+
+    def test_public_verifier_rejects_student_guide_mutations(self):
+        mutations = (
+            ("missing asset", "student-guides.css", None),
+            (
+                "hub status count",
+                "student-guides.html",
+                lambda text: text.replace('class="status soon">Coming soon', 'class="status ready">Ready', 1),
+            ),
+            (
+                "phase time",
+                "student-day-01.html",
+                lambda text: text.replace("5:30–6:10 p.m.", "5:31–6:10 p.m.", 1),
+            ),
+            (
+                "external link safety",
+                "student-day-01.html",
+                lambda text: text.replace('rel="noopener noreferrer"', 'rel="noreferrer"', 1),
+            ),
+            (
+                "privacy leak",
+                "student-guides.js",
+                lambda text: text + "\n// C:\\private\\student-guide\n",
+            ),
+            (
+                "project subpath",
+                "student-guides.html",
+                lambda text: text.replace('href="student-guides.css"', 'href="/student-guides.css"', 1),
+            ),
+            (
+                "stylesheet subpath",
+                "student-guides.css",
+                lambda text: text + '\n.bad { background-image: url("/private.png"); }\n',
+            ),
+        )
+        for name, relative, mutate in mutations:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temp_dir:
+                copy = Path(temp_dir) / "site"
+                shutil.copytree(ROOT, copy, ignore=shutil.ignore_patterns(".git"))
+                path = copy / relative
+                if mutate is None:
+                    path.unlink()
+                else:
+                    path.write_text(mutate(path.read_text(encoding="utf-8")), encoding="utf-8")
+                result = subprocess.run(
+                    [sys.executable, str(copy / "scripts" / "verify_public_site.py"), "--root", str(copy)],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
 
     def test_class_plan_is_self_contained_and_has_all_sessions(self):
         self.assertTrue(self.class_plan, "class-plan.html is missing")
