@@ -2,7 +2,12 @@
   "use strict";
   const phaseDetails = [...document.querySelectorAll("details.phase-card")];
   const openHash = () => {
-    const id = decodeURIComponent(location.hash.slice(1));
+    let id = "";
+    try {
+      id = decodeURIComponent(location.hash.slice(1));
+    } catch {
+      return;
+    }
     if (!id) return;
     const target = document.getElementById(id);
     if (target instanceof HTMLDetailsElement && target.classList.contains("phase-card")) target.open = true;
