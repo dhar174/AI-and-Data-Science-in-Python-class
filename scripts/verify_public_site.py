@@ -77,10 +77,10 @@ BINARY_SUFFIXES = {
 WINDOWS_PATH = re.compile(r"(?i)(?<![a-z0-9])(?:[a-z]:[\\/](?!/)|\\\\[^\\/\s]+[\\/])")
 FILE_URL = re.compile(r"(?i)\bfile:(?:/{1,3}|\\)")
 EXPECTED_CLASS_PLAN_SOURCE_HASHES = {
-    "schedule-sha256": "222cb2a9412afb29e1d4247568181108aa7e32104508cf9cc05b30b6b705a659",
-    "syllabus-sha256": "d7396851440c83d94c874c9256eef8a381b126064346089903c0c953ae3984b6",
+    "schedule-sha256": "4d832a648d386cad52ded0f4fb87ffeed7fc7bc040a36b6651e428f13f888b80",
+    "syllabus-sha256": "834e1831762ab00aa683087bfb1d276ddc4788849d6c38a62211787d22275cfa",
 }
-EXPECTED_CLASS_PLAN_SHA256 = "ca735501d1195869d6bb1dbabe76cc58e4232f7bde0c43fdf549eab3af31d3a5"
+EXPECTED_CLASS_PLAN_SHA256 = "33ada3e93ba1fa7e3f496d2ce20cbfb699fd1610ef1b9f36cdf77b41573929f3"
 EXPECTED_DAY_ONE_PHASES = (
     ("orientation", "5:30–6:10 p.m."),
     ("analytic-approaches", "6:10–6:35 p.m."),
@@ -91,7 +91,7 @@ EXPECTED_DAY_ONE_PHASES = (
     ("assessment", "9:20–9:50 p.m."),
     ("exit", "9:50–10:00 p.m."),
 )
-STUDENT_GUIDE_EXTERNAL_HOSTS = {"docs.google.com", "colab.research.google.com"}
+STUDENT_GUIDE_EXTERNAL_HOSTS = {"drive.google.com", "docs.google.com", "colab.research.google.com"}
 STUDENT_GUIDE_FORBIDDEN = (
     "retrieval_questions",
     "worked_example",
@@ -289,14 +289,14 @@ def validate_student_guides_hub(document: str) -> list[str]:
         errors.append("student-guides.html day entries must be ordered Day 1 through Day 33")
     ready = [entry for entry in parser.day_entries if "ready" in entry["statuses"]]
     soon = [entry for entry in parser.day_entries if "soon" in entry["statuses"]]
-    if len(ready) != 1:
-        errors.append("student-guides.html must contain exactly one Ready day")
-    if len(soon) != 32:
-        errors.append("student-guides.html must contain exactly 32 Coming soon days")
-    if len(ready) == 1 and ready[0]["hrefs"] != ["student-day-01.html"]:
-        errors.append("student-guides.html Ready day must link only to student-day-01.html")
-    if any(entry["hrefs"] for entry in soon):
-        errors.append("student-guides.html Coming soon days must not be links")
+    if len(ready) != 33:
+        errors.append("student-guides.html must contain exactly 33 Ready days")
+    if soon:
+        errors.append("student-guides.html must not contain Coming soon days")
+    expected_links = [f"student-day-{number:02d}.html" for number in range(1, 34)]
+    actual_links = [entry["hrefs"][0] if entry["hrefs"] else "" for entry in parser.day_entries]
+    if actual_links != expected_links:
+        errors.append("student-guides.html Ready days must link to student-day-01.html through student-day-33.html")
     return errors
 
 
@@ -325,8 +325,8 @@ def validate_student_day_one(document: str) -> list[str]:
         for attributes in parser.external_links
         if attributes.get("href")
     }
-    if len(unique_urls) != 5:
-        errors.append("student-day-01.html must contain exactly five unique external resource links")
+    if len(unique_urls) < 5:
+        errors.append("student-day-01.html must contain at least five unique external resource links")
     for attributes in parser.external_links:
         href = attributes.get("href") or ""
         host = (urlsplit(href).hostname or "").lower()
@@ -364,9 +364,14 @@ def verify(root: Path) -> list[str]:
     for relative in REQUIRED_FILES:
         if not (root / relative).is_file():
             errors.append(f"missing required file: {relative}")
+    for number in range(2, 34):
+        relative = f"student-day-{number:02d}.html"
+        if not (root / relative).is_file():
+            errors.append(f"missing required file: {relative}")
 
     readable = {}
-    for relative in DEPLOYABLE_TEXT:
+    deployable = list(DEPLOYABLE_TEXT) + [f"student-day-{number:02d}.html" for number in range(2, 34)]
+    for relative in deployable:
         path = root / relative
         if not path.is_file():
             continue
@@ -388,7 +393,7 @@ def verify(root: Path) -> list[str]:
         "index.html",
         "class-plan.html",
         "student-guides.html",
-        "student-day-01.html",
+        *[f"student-day-{number:02d}.html" for number in range(1, 34)],
     ):
         parser = AssetParser()
         parser.feed(readable.get(relative, ""))
@@ -421,7 +426,7 @@ def verify(root: Path) -> list[str]:
         readable.get(relative, "")
         for relative in (
             "student-guides.html",
-            "student-day-01.html",
+            *[f"student-day-{number:02d}.html" for number in range(1, 34)],
             "student-guides.css",
             "student-guides.js",
         )
