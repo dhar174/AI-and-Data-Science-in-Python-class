@@ -77,10 +77,10 @@ BINARY_SUFFIXES = {
 WINDOWS_PATH = re.compile(r"(?i)(?<![a-z0-9])(?:[a-z]:[\\/](?!/)|\\\\[^\\/\s]+[\\/])")
 FILE_URL = re.compile(r"(?i)\bfile:(?:/{1,3}|\\)")
 EXPECTED_CLASS_PLAN_SOURCE_HASHES = {
-    "schedule-sha256": "3796db6c041317f195ca5c26e6a5068d5fd7f0a36513897837ff229936041dc5",
-    "syllabus-sha256": "522ab70c1eca4f8d817d62702c0dd313770901666b972bdcea40a46eb9137887",
+    "schedule-sha256": "222cb2a9412afb29e1d4247568181108aa7e32104508cf9cc05b30b6b705a659",
+    "syllabus-sha256": "d7396851440c83d94c874c9256eef8a381b126064346089903c0c953ae3984b6",
 }
-EXPECTED_CLASS_PLAN_SHA256 = "7e0b7e5971e14eba92915db12cb3e17e27d07b368202d5176c20c7001e29ab6e"
+EXPECTED_CLASS_PLAN_SHA256 = "ca735501d1195869d6bb1dbabe76cc58e4232f7bde0c43fdf549eab3af31d3a5"
 EXPECTED_DAY_ONE_PHASES = (
     ("orientation", "5:30–6:10 p.m."),
     ("analytic-approaches", "6:10–6:35 p.m."),

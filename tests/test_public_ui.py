@@ -398,7 +398,7 @@ class PublicUiTests(unittest.TestCase):
             page = copy / "class-plan.html"
             page.write_text(
                 self.class_plan.replace(
-                    'content="3796db6c041317f195ca5c26e6a5068d5fd7f0a36513897837ff229936041dc5"',
+                    'content="222cb2a9412afb29e1d4247568181108aa7e32104508cf9cc05b30b6b705a659"',
                     'content="0000000000000000000000000000000000000000000000000000000000000000"',
                     1,
                 ),
