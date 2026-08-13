@@ -88,6 +88,7 @@ class PublicUiTests(unittest.TestCase):
         cls.class_plan = class_plan.read_text(encoding="utf-8") if class_plan.is_file() else ""
         cls.student_guides = (ROOT / "student-guides.html").read_text(encoding="utf-8")
         cls.student_day_01 = (ROOT / "student-day-01.html").read_text(encoding="utf-8")
+        cls.student_day_02 = (ROOT / "student-day-02.html").read_text(encoding="utf-8")
 
     def test_public_navigation_and_footer_exclude_private_surfaces(self):
         self.assertNotIn('data-mode="Instructor"', self.index)
@@ -224,6 +225,50 @@ class PublicUiTests(unittest.TestCase):
                 )
             )
 
+    def test_day_two_has_the_exact_python_session_bridge_and_safe_resources(self):
+        parser = StudentGuideParser()
+        parser.feed(self.student_day_02)
+        expected = (
+            ("storytelling-bridge", "5:30–5:50 p.m."),
+            ("python-launch", "5:50–6:10 p.m."),
+            ("values-tracing", "6:10–6:40 p.m."),
+            ("control-flow-functions", "6:40–7:10 p.m."),
+            ("clean-mean", "7:10–7:35 p.m."),
+            ("diagnostic", "7:35–7:55 p.m."),
+            ("break", "7:55–8:25 p.m."),
+            ("pyquest", "8:25–9:20 p.m."),
+            ("debug-mini-script", "9:20–9:45 p.m."),
+            ("exit", "9:45–10:00 p.m."),
+        )
+        self.assertEqual(
+            [phase_id for phase_id, _ in expected],
+            [phase["id"] for phase in parser.phases],
+        )
+        for phase, (_, time_range) in zip(parser.phases, expected):
+            self.assertIn(time_range, phase["summary"])
+        self.assertEqual(
+            ["break"],
+            [phase["id"] for phase in parser.phases if "break-phase" in phase["classes"]],
+        )
+        for marker in (
+            "Data Storyteller Quest",
+            "Python foundations for analysis",
+            "clean_mean",
+            "PyQuest",
+            "alternate class activity",
+            "45 minutes",
+            "https://data-storyteller-quest-ue4r4kw7oq-ue.a.run.app",
+            "https://pyquest-ue4r4kw7oq-uw.a.run.app",
+        ):
+            self.assertIn(marker, self.student_day_02)
+        for attributes in parser.external_links:
+            self.assertEqual("_blank", attributes.get("target"))
+            self.assertTrue(
+                {"noopener", "noreferrer"}.issubset(
+                    set(attributes.get("rel", "").split())
+                )
+            )
+
     def test_public_verifier_rejects_student_guide_mutations(self):
         mutations = (
             ("missing asset", "student-guides.css", None),
@@ -236,6 +281,11 @@ class PublicUiTests(unittest.TestCase):
                 "phase time",
                 "student-day-01.html",
                 lambda text: text.replace("5:30–6:10 p.m.", "5:31–6:10 p.m.", 1),
+            ),
+            (
+                "day two phase time",
+                "student-day-02.html",
+                lambda text: text.replace("5:30–5:50 p.m.", "5:31–5:50 p.m.", 1),
             ),
             (
                 "external link safety",

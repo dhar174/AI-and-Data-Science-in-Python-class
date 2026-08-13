@@ -20,6 +20,7 @@ REQUIRED_FILES = (
     "class-plan.html",
     "student-guides.html",
     "student-day-01.html",
+    "student-day-02.html",
     "student-guides.css",
     "student-guides.js",
     "styles.css",
@@ -33,6 +34,7 @@ DEPLOYABLE_TEXT = (
     "class-plan.html",
     "student-guides.html",
     "student-day-01.html",
+    "student-day-02.html",
     "student-guides.css",
     "student-guides.js",
     "styles.css",
@@ -91,7 +93,26 @@ EXPECTED_DAY_ONE_PHASES = (
     ("assessment", "9:20–9:50 p.m."),
     ("exit", "9:50–10:00 p.m."),
 )
-STUDENT_GUIDE_EXTERNAL_HOSTS = {"drive.google.com", "docs.google.com", "colab.research.google.com"}
+EXPECTED_DAY_TWO_PHASES = (
+    ("storytelling-bridge", "5:30–5:50 p.m."),
+    ("python-launch", "5:50–6:10 p.m."),
+    ("values-tracing", "6:10–6:40 p.m."),
+    ("control-flow-functions", "6:40–7:10 p.m."),
+    ("clean-mean", "7:10–7:35 p.m."),
+    ("diagnostic", "7:35–7:55 p.m."),
+    ("break", "7:55–8:25 p.m."),
+    ("pyquest", "8:25–9:20 p.m."),
+    ("debug-mini-script", "9:20–9:45 p.m."),
+    ("exit", "9:45–10:00 p.m."),
+)
+STUDENT_GUIDE_EXTERNAL_HOSTS = {
+    "drive.google.com",
+    "docs.google.com",
+    "colab.research.google.com",
+    "data-storyteller-quest-ue4r4kw7oq-ue.a.run.app",
+    "pyquest-ue4r4kw7oq-uw.a.run.app",
+    "python-quest-ue4r4kw7oq-uw.a.run.app",
+}
 STUDENT_GUIDE_FORBIDDEN = (
     "retrieval_questions",
     "worked_example",
@@ -320,21 +341,65 @@ def validate_student_day_one(document: str) -> list[str]:
         errors.append("student-day-01.html must contain one protected break phase")
     if "Break: 7:55–8:25 p.m." not in document:
         errors.append("student-day-01.html is missing the protected break banner")
+    errors.extend(validate_student_day_external_links(document, parser, "student-day-01.html", 5))
+    return errors
+
+
+def validate_student_day_external_links(
+    document: str, parser: StudentGuideContractParser, filename: str, minimum_unique_urls: int
+) -> list[str]:
+    errors: list[str] = []
     unique_urls = {
         attributes["href"]
         for attributes in parser.external_links
         if attributes.get("href")
     }
-    if len(unique_urls) < 5:
-        errors.append("student-day-01.html must contain at least five unique external resource links")
+    if len(unique_urls) < minimum_unique_urls:
+        errors.append(f"{filename} must contain at least {minimum_unique_urls} unique external resource links")
     for attributes in parser.external_links:
         href = attributes.get("href") or ""
         host = (urlsplit(href).hostname or "").lower()
         rel = set((attributes.get("rel") or "").split())
         if host not in STUDENT_GUIDE_EXTERNAL_HOSTS:
-            errors.append(f"student-day-01.html uses an unapproved external host: {host!r}")
+            errors.append(f"{filename} uses an unapproved external host: {host!r}")
         if attributes.get("target") != "_blank" or not {"noopener", "noreferrer"}.issubset(rel):
-            errors.append("student-day-01.html external links must open safely in a new tab")
+            errors.append(f"{filename} external links must open safely in a new tab")
+    return errors
+
+
+def validate_student_day_two(document: str) -> list[str]:
+    parser = parse_student_guide(document)
+    errors = list(parser.errors)
+    expected_ids = [phase_id for phase_id, _time_range in EXPECTED_DAY_TWO_PHASES]
+    actual_ids = [phase["id"] for phase in parser.phases]
+    if actual_ids != expected_ids:
+        errors.append("student-day-02.html must contain the ten ordered Day 2 phases")
+    if len(parser.phases) == len(EXPECTED_DAY_TWO_PHASES):
+        for phase, (_phase_id, time_range) in zip(parser.phases, EXPECTED_DAY_TWO_PHASES):
+            if time_range not in str(phase["summary"]):
+                errors.append(
+                    f"student-day-02.html phase {phase['id']!r} is missing time {time_range}"
+                )
+    break_phases = [
+        phase for phase in parser.phases if "break-phase" in phase["classes"]
+    ]
+    if len(break_phases) != 1 or break_phases[0]["id"] != "break":
+        errors.append("student-day-02.html must contain one protected break phase")
+    if "Break: 7:55–8:25 p.m." not in document:
+        errors.append("student-day-02.html is missing the protected break banner")
+    for required in (
+        "Data Storyteller Quest",
+        "Python foundations for analysis",
+        "clean_mean",
+        "PyQuest",
+        "alternate class activity",
+        "45 minutes",
+        "https://data-storyteller-quest-ue4r4kw7oq-ue.a.run.app",
+        "https://pyquest-ue4r4kw7oq-uw.a.run.app",
+    ):
+        if required not in document:
+            errors.append(f"student-day-02.html is missing its Day 2 contract: {required}")
+    errors.extend(validate_student_day_external_links(document, parser, "student-day-02.html", 5))
     return errors
 
 
@@ -418,10 +483,13 @@ def verify(root: Path) -> list[str]:
 
     student_guides = readable.get("student-guides.html", "")
     student_day_one = readable.get("student-day-01.html", "")
+    student_day_two = readable.get("student-day-02.html", "")
     if student_guides:
         errors.extend(validate_student_guides_hub(student_guides))
     if student_day_one:
         errors.extend(validate_student_day_one(student_day_one))
+    if student_day_two:
+        errors.extend(validate_student_day_two(student_day_two))
     combined_student_guides = "\n".join(
         readable.get(relative, "")
         for relative in (
