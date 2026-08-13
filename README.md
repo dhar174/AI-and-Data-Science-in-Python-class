@@ -6,6 +6,7 @@ This repository is the public, static edition of the Course Library Command Cent
 - Date-neutral class plan: https://dhar174.github.io/AI-and-Data-Science-in-Python-class/class-plan.html
 - Student Day Guides: https://dhar174.github.io/AI-and-Data-Science-in-Python-class/student-guides.html
 - Day 1 guide: https://dhar174.github.io/AI-and-Data-Science-in-Python-class/student-day-01.html
+- Day 2 guide: https://dhar174.github.io/AI-and-Data-Science-in-Python-class/student-day-02.html
 - Repository: https://github.com/dhar174/AI-and-Data-Science-in-Python-class
 - Public catalog: `data/course-catalog.json`
 
@@ -26,7 +27,7 @@ The site is not considered deployed until the anonymous Drive audit, repository 
 
 ## Student Day Guides
 
-`student-guides.html` is the 33-day hub, and `student-day-01.html` is the first detailed class-night guide. The shared `student-guides.css` and `student-guides.js` support both pages. All four files are generated from validated private curriculum sources and must not be hand-edited in this checkout.
+`student-guides.html` is the 33-day hub. `student-day-01.html` and `student-day-02.html` are detailed class-night guides; the remaining pages retain their generated public resource views. The shared `student-guides.css` and `student-guides.js` support every guide page. All Student Day Guide outputs are generated from validated private curriculum sources and must not be hand-edited in this checkout.
 
 Run the private generator from the private Course Library Portal directory, targeting this public checkout:
 
@@ -35,14 +36,14 @@ py -3 -B .\build_student_guides.py --output-dir "<public-checkout>"
 py -3 -B .\build_student_guides.py --output-dir "<public-checkout>" --check
 ```
 
-Only the four public-safe generated files cross into this repository. Private source documents, local paths, internal IDs, and instructor-only material remain outside the public checkout.
+Only public-safe generated student-guide output crosses into this repository. Private source documents, local paths, internal IDs, and instructor-only material remain outside the public checkout.
 
 ## Manual regeneration and release
 
 Run this workflow after the private source catalog changes:
 
 1. Regenerate the public allowlisted catalog with `scripts/export_public_catalog.py`, always passing `--denylist data/public-denylist.json`.
-2. Regenerate and check the four Student Day Guides files with the private `build_student_guides.py` workflow above.
+2. Regenerate and check all Student Day Guide outputs with the private `build_student_guides.py` workflow above.
 3. If the promoted private schedule or syllabus changed, regenerate both class-plan copies with the private `build_class_plan.py` and confirm they are byte-identical.
 4. Run `scripts/verify_public_catalog.py` and `scripts/verify_public_site.py`.
 5. Run the anonymous Drive-link audit in a fresh browser context with no Google cookies.

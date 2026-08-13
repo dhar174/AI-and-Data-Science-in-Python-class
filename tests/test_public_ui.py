@@ -88,6 +88,7 @@ class PublicUiTests(unittest.TestCase):
         cls.class_plan = class_plan.read_text(encoding="utf-8") if class_plan.is_file() else ""
         cls.student_guides = (ROOT / "student-guides.html").read_text(encoding="utf-8")
         cls.student_day_01 = (ROOT / "student-day-01.html").read_text(encoding="utf-8")
+        cls.student_day_02 = (ROOT / "student-day-02.html").read_text(encoding="utf-8")
 
     def test_public_navigation_and_footer_exclude_private_surfaces(self):
         self.assertNotIn('data-mode="Instructor"', self.index)
@@ -183,12 +184,14 @@ class PublicUiTests(unittest.TestCase):
         )
         ready = [entry for entry in parser.day_entries if "ready" in entry["statuses"]]
         soon = [entry for entry in parser.day_entries if "soon" in entry["statuses"]]
-        self.assertEqual(1, len(ready))
-        self.assertEqual(32, len(soon))
-        self.assertEqual(["student-day-01.html"], ready[0]["hrefs"])
-        self.assertTrue(all(not entry["hrefs"] for entry in soon))
+        self.assertEqual(33, len(ready))
+        self.assertEqual(0, len(soon))
+        self.assertEqual(
+            [f"student-day-{number:02d}.html" for number in range(1, 34)],
+            [entry["hrefs"][0] for entry in ready],
+        )
 
-    def test_day_one_has_eight_phases_break_times_and_five_external_links(self):
+    def test_day_one_has_eight_phases_break_times_and_resource_links(self):
         parser = StudentGuideParser()
         parser.feed(self.student_day_01)
         expected = (
@@ -213,7 +216,51 @@ class PublicUiTests(unittest.TestCase):
         self.assertEqual(1, len(break_phases))
         self.assertEqual("break", break_phases[0]["id"])
         unique_urls = {attributes["href"] for attributes in parser.external_links}
-        self.assertEqual(5, len(unique_urls))
+        self.assertGreaterEqual(len(unique_urls), 12)
+        for attributes in parser.external_links:
+            self.assertEqual("_blank", attributes.get("target"))
+            self.assertTrue(
+                {"noopener", "noreferrer"}.issubset(
+                    set(attributes.get("rel", "").split())
+                )
+            )
+
+    def test_day_two_has_the_exact_python_session_bridge_and_safe_resources(self):
+        parser = StudentGuideParser()
+        parser.feed(self.student_day_02)
+        expected = (
+            ("storytelling-bridge", "5:30–5:50 p.m."),
+            ("python-launch", "5:50–6:10 p.m."),
+            ("values-tracing", "6:10–6:40 p.m."),
+            ("control-flow-functions", "6:40–7:10 p.m."),
+            ("clean-mean", "7:10–7:35 p.m."),
+            ("diagnostic", "7:35–7:55 p.m."),
+            ("break", "7:55–8:25 p.m."),
+            ("pyquest", "8:25–9:20 p.m."),
+            ("debug-mini-script", "9:20–9:45 p.m."),
+            ("exit", "9:45–10:00 p.m."),
+        )
+        self.assertEqual(
+            [phase_id for phase_id, _ in expected],
+            [phase["id"] for phase in parser.phases],
+        )
+        for phase, (_, time_range) in zip(parser.phases, expected):
+            self.assertIn(time_range, phase["summary"])
+        self.assertEqual(
+            ["break"],
+            [phase["id"] for phase in parser.phases if "break-phase" in phase["classes"]],
+        )
+        for marker in (
+            "Data Storyteller Quest",
+            "Python foundations for analysis",
+            "clean_mean",
+            "PyQuest",
+            "alternate class activity",
+            "45 minutes",
+            "https://data-storyteller-quest-ue4r4kw7oq-ue.a.run.app",
+            "https://pyquest-ue4r4kw7oq-uw.a.run.app",
+        ):
+            self.assertIn(marker, self.student_day_02)
         for attributes in parser.external_links:
             self.assertEqual("_blank", attributes.get("target"))
             self.assertTrue(
@@ -228,12 +275,17 @@ class PublicUiTests(unittest.TestCase):
             (
                 "hub status count",
                 "student-guides.html",
-                lambda text: text.replace('class="status soon">Coming soon', 'class="status ready">Ready', 1),
+                lambda text: text.replace('class="status ready">Ready', 'class="status soon">Coming soon', 1),
             ),
             (
                 "phase time",
                 "student-day-01.html",
                 lambda text: text.replace("5:30–6:10 p.m.", "5:31–6:10 p.m.", 1),
+            ),
+            (
+                "day two phase time",
+                "student-day-02.html",
+                lambda text: text.replace("5:30–5:50 p.m.", "5:31–5:50 p.m.", 1),
             ),
             (
                 "external link safety",
@@ -398,7 +450,7 @@ class PublicUiTests(unittest.TestCase):
             page = copy / "class-plan.html"
             page.write_text(
                 self.class_plan.replace(
-                    'content="222cb2a9412afb29e1d4247568181108aa7e32104508cf9cc05b30b6b705a659"',
+                    'content="4d832a648d386cad52ded0f4fb87ffeed7fc7bc040a36b6651e428f13f888b80"',
                     'content="0000000000000000000000000000000000000000000000000000000000000000"',
                     1,
                 ),

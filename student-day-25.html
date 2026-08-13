@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Day 25 — Student Day Guides</title>
+  <meta name="source-schedule-sha256" content="4d832a648d386cad52ded0f4fb87ffeed7fc7bc040a36b6651e428f13f888b80">
+  <meta name="source-catalog-sha256" content="a49d4f81d8a345e042aa98bda1854b1a4a254255c59fd93610dd706660799906">
+  <link rel="stylesheet" href="student-guides.css">
+</head>
+<body>
+<a class="skip-link" href="#mainContent">Skip to day resources</a>
+<header class="topbar">
+  <a class="wordmark" href="index.html">Course Library</a>
+  <nav aria-label="Student navigation">
+    <a href="class-plan.html">Class Plan</a>
+    <a href="student-guides.html">Student Day Guides</a>
+  </nav>
+</header>
+<main id="mainContent" class="container day">
+  <nav class="breadcrumb" aria-label="Breadcrumb"><a href="index.html">Course Library</a><span aria-hidden="true">/</span><a href="student-guides.html">Student Day Guides</a><span aria-hidden="true">/</span><span aria-current="page">Day 25</span></nav>
+  <header class="day-hero"><div><p class="eyebrow">Module 3 · Week 1</p><h1>Day 25 · Open/local models and practical adaptation: LoRA, QLoRA, and SFT</h1><p>5:30 p.m.–10:00 p.m. · 240 instructional minutes · 30-minute break</p></div><a class="quiet-button" href="student-guides.html">Back to hub</a></header>
+  <section class="goal-card"><p class="eyebrow">Tonight's goal</p><h2>Explain why a team may adapt a small open model instead of only prompting or using RAG, then run or inspect a constrained PEFT workflow from 4-bit loading through SFT and adapter evaluation.</h2><div><span>Success criteria:</span><ul><li>Students trace a small/open model through quantized loading, LoRA attachment, instruction dataset formatting, SFT, adapter saving, and base-versus-SFT comparison, with train[:64], a short run, CPU inference, or a precomputed fallback when training is unavailable.</li></ul></div></section>
+  <section class="resources" aria-labelledby="resourcesHeading"><div class="section-heading"><p class="eyebrow">Assigned-day resources</p><h2 id="resourcesHeading">Class resources</h2><p>Open the verified public route where available. Items without a public route remain explicitly marked for instructor-mediated access.</p></div><ul><li><div><strong>The_Modular_AI_Foundry.pptx</strong><small>PPTX · Public link</small></div><a class="resource-link compact" href="https://docs.google.com/presentation/d/1RXdnDwapIGE_gAdIUNS7H2vuRlh6YQfb/edit?usp=drivesdk&amp;ouid=111972974865501378782&amp;rtpof=true&amp;sd=true" target="_blank" rel="noopener noreferrer"><span>Open PPTX</span><span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a></li><li><div><strong>Demystifying_Quantization.mp4</strong><small>MP4 · Public link</small></div><a class="resource-link compact" href="https://drive.google.com/file/d/1fGP6O6EccU9kfVIwM426_qPj-q_wjCfX/view?usp=drivesdk" target="_blank" rel="noopener noreferrer"><span>Open MP4</span><span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a></li><li><div><strong>Fine-Tuning_with_LoRA_&amp;_QLoRA.mp4</strong><small>MP4 · Public link</small></div><a class="resource-link compact" href="https://drive.google.com/file/d/1dl_wSwMCNyUt4iY2kQ3jjwlRzC7Rb7SL/view?usp=drivesdk" target="_blank" rel="noopener noreferrer"><span>Open MP4</span><span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a></li><li><div><strong>Getting_Started_with_Hugging_Face.mp4</strong><small>MP4 · Public link</small></div><a class="resource-link compact" href="https://drive.google.com/file/d/10tAN8ektn5kMRpTP5VQHymjBQE0gEchk/view?usp=drivesdk" target="_blank" rel="noopener noreferrer"><span>Open MP4</span><span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a></li><li><div><strong>Intro_to_Fine-Tuning.mp4</strong><small>MP4 · Public link</small></div><a class="resource-link compact" href="https://drive.google.com/file/d/1nF7xtzFplwX6eRYoCe6vD0c0EKEN2UaK/view?usp=drivesdk" target="_blank" rel="noopener noreferrer"><span>Open MP4</span><span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a></li><li><div><strong>Quantization_Demystified.mp4</strong><small>MP4 · Public link</small></div><a class="resource-link compact" href="https://drive.google.com/file/d/1uIPLcVG3byE6ihBo7vkWkpjTJs0yWuAO/view?usp=drivesdk" target="_blank" rel="noopener noreferrer"><span>Open MP4</span><span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a></li></ul></section>
+  <section class="schedule" aria-labelledby="scheduleHeading"><div class="section-heading"><p class="eyebrow">Session outline</p><h2 id="scheduleHeading">What to do today</h2></div><ol><li>Retrieval and goals: Name the controlled fields in a reproducible model experiment. | Explain why open weights do not remove licensing, privacy, or safety obligations. | Recall the difference between prompting, RAG, and changing model behavior.</li><li>Worked example: Start with the existing Qwen/Qwen2.5-0.5B-Instruct or similarly practical small model, load it in 4-bit NF4 with bitsandbytes, attach LoRA adapters to appropriate attention projections, format a tiny instruction dataset such as train[:64], run or inspect a one-epoch/10–20-step SFT profile, save the adapter, and compare base and SFT outputs.</li><li>Guided practice: Hosted/open route comparison; full fine-tuning versus PEFT; LoRA and QLoRA; 4-bit bitsandbytes/NF4 loading; prepare_model_for_kbit_training or the equivalent current workflow; attention target-module choice; instruction dataset formatting; SFT; adapter save/load/merge inspection; base/SFT comparison.</li><li>Assessment: Adaptation configuration and base-versus-SFT evidence record</li><li>Homework: Complete the adapter configuration record, run or inspect the reduced SFT route, and submit fixed-prompt base-versus-SFT evidence. (50 minutes)</li></ol></section>
+</main>
+<footer><span>Course Library</span><a href="class-plan.html">View the full Class Plan</a></footer>
+<script src="student-guides.js" defer></script>
+</body>
+</html>
