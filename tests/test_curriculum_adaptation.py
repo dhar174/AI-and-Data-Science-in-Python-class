@@ -53,7 +53,8 @@ class CurriculumAdaptationTests(unittest.TestCase):
             "03 - Module 3 - Generative AI/04 - LLaMA and Open Models/08 - Project Packages/dependency-009/quant_load_eval_metrics.ipynb",
             "03 - Module 3 - Generative AI/04 - LLaMA and Open Models/07 - Data and Supporting Assets/fine_tuning_3b_plan.md",
         }
-        self.assertTrue(required_paths <= self.catalog_paths)
+        missing_paths = sorted(required_paths - self.catalog_paths)
+        self.assertTrue(required_paths <= self.catalog_paths, f"Missing catalog paths: {missing_paths}")
 
 
 if __name__ == "__main__":
