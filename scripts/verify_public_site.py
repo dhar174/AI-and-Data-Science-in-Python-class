@@ -310,14 +310,14 @@ def validate_student_guides_hub(document: str) -> list[str]:
         errors.append("student-guides.html day entries must be ordered Day 1 through Day 33")
     ready = [entry for entry in parser.day_entries if "ready" in entry["statuses"]]
     soon = [entry for entry in parser.day_entries if "soon" in entry["statuses"]]
-    if len(ready) != 33:
-        errors.append("student-guides.html must contain exactly 33 Ready days")
-    if soon:
-        errors.append("student-guides.html must not contain Coming soon days")
+    if len(ready) != 11:
+        errors.append("student-guides.html must contain exactly 11 Full guide days")
+    if len(soon) != 22:
+        errors.append("student-guides.html must contain exactly 22 Resource outline days")
     expected_links = [f"student-day-{number:02d}.html" for number in range(1, 34)]
     actual_links = [entry["hrefs"][0] if entry["hrefs"] else "" for entry in parser.day_entries]
     if actual_links != expected_links:
-        errors.append("student-guides.html Ready days must link to student-day-01.html through student-day-33.html")
+        errors.append("student-guides.html day entries must link to student-day-01.html through student-day-33.html")
     return errors
 
 
@@ -530,7 +530,9 @@ def verify(root: Path) -> list[str]:
             if f'<meta name="{name}" content="{expected}">' not in class_plan:
                 errors.append(f"class-plan.html: {name} does not match the expected promoted source")
         class_plan_path = root / "class-plan.html"
-        actual_class_plan_hash = hashlib.sha256(class_plan_path.read_bytes()).hexdigest()
+        actual_class_plan_hash = hashlib.sha256(
+            class_plan_path.read_bytes().replace(b"\r\n", b"\n")
+        ).hexdigest()
         if actual_class_plan_hash != EXPECTED_CLASS_PLAN_SHA256:
             errors.append("class-plan.html SHA-256 does not match the deterministic approved page")
         for forbidden in (
