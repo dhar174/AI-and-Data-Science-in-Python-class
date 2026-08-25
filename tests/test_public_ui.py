@@ -275,7 +275,7 @@ class PublicUiTests(unittest.TestCase):
             (
                 "hub status count",
                 "student-guides.html",
-                lambda text: text.replace('class="status ready">Ready', 'class="status soon">Coming soon', 1),
+                lambda text: text.replace('class="status ready">Full guide', 'class="status soon">Resource outline', 1),
             ),
             (
                 "phase time",
@@ -479,6 +479,21 @@ class PublicUiTests(unittest.TestCase):
             )
             self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
             self.assertIn("class-plan.html SHA-256 does not match", result.stdout + result.stderr)
+
+    def test_public_verifier_accepts_class_plan_with_crlf_checkout_bytes(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            copy = Path(temp_dir) / "site"
+            shutil.copytree(ROOT, copy, ignore=shutil.ignore_patterns(".git"))
+            page = copy / "class-plan.html"
+            canonical_bytes = page.read_bytes().replace(b"\r\n", b"\n")
+            page.write_bytes(canonical_bytes.replace(b"\n", b"\r\n"))
+            result = subprocess.run(
+                [sys.executable, str(copy / "scripts" / "verify_public_site.py"), "--root", str(copy)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
     def test_project_site_assets_are_relative(self):
         self.assertIn('href="styles.css"', self.index)
