@@ -184,10 +184,10 @@ class PublicUiTests(unittest.TestCase):
         )
         ready = [entry for entry in parser.day_entries if "ready" in entry["statuses"]]
         soon = [entry for entry in parser.day_entries if "soon" in entry["statuses"]]
-        self.assertEqual(33, len(ready))
-        self.assertEqual(0, len(soon))
+        self.assertEqual(22, len(ready))
+        self.assertEqual(11, len(soon))
         self.assertEqual(
-            [f"student-day-{number:02d}.html" for number in range(1, 34)],
+            [f"student-day-{number:02d}.html" for number in [*range(1, 12), *range(23, 34)]],
             [entry["hrefs"][0] for entry in ready],
         )
 
@@ -449,10 +449,11 @@ class PublicUiTests(unittest.TestCase):
             shutil.copytree(ROOT, copy, ignore=shutil.ignore_patterns(".git"))
             page = copy / "class-plan.html"
             page.write_text(
-                self.class_plan.replace(
-                    'content="4d832a648d386cad52ded0f4fb87ffeed7fc7bc040a36b6651e428f13f888b80"',
-                    'content="0000000000000000000000000000000000000000000000000000000000000000"',
-                    1,
+                re.sub(
+                    r'(name="schedule-sha256" content=")[a-f0-9]{64}',
+                    lambda match: match.group(1) + "0" * 64,
+                    self.class_plan,
+                    count=1,
                 ),
                 encoding="utf-8",
             )

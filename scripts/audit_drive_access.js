@@ -213,6 +213,8 @@ async function main() {
       concurrency: Math.min(options.concurrency, preflightTargets.length),
     });
     const preflight = phase(preflightResults);
+    preflight.not_applicable_categories = ["drive_file", "docs_document", "presentation", "spreadsheet", "colab"]
+      .filter((category) => !preflightTargets.some((target) => target.category === category));
     let fullAudit = null;
 
     if (preflight.status === "passed" && !options.preflightOnly) {
