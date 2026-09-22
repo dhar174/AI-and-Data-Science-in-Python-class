@@ -1,4 +1,4 @@
-"""Focused regression checks for the restored Module 3 adaptation sequence."""
+"""Focused regression checks for the revised Module 3 sequence and retained adaptation resources."""
 
 from __future__ import annotations
 
@@ -19,31 +19,19 @@ class CurriculumAdaptationTests(unittest.TestCase):
 
     def test_module_3_titles_and_applied_sequence_are_public(self) -> None:
         required_phrases = (
-            "Open/local models and practical adaptation: LoRA, QLoRA, and SFT",
-            "Prompt engineering, DPO, and base–SFT–DPO evaluation",
-            "PEFT",
-            "QLoRA",
-            "4-bit",
-            "bitsandbytes",
-            "NF4",
-            "prepare_model_for_kbit_training",
-            "instruction dataset",
-            "chosen/rejected",
-            "DPO",
-            "RLHF",
-            "PPO",
-            "base–SFT–DPO",
-            "train[:64]",
-            "train[:32]",
-            "precomputed",
-            "catastrophic behavior",
-            "prompting-only",
-            "RAG",
-            "tool/agent",
+            "Transformers, LLMs, SLMs, and Hugging Face",
+            "Responses Python APIs and a llama.cpp-compatible local server",
+            "Quantization, PEFT, LoRA, QLoRA, and adaptation choices",
+            "LangChain components and LangGraph fundamentals",
+            "Codex, Claude Code, and full local deployment",
+            "Capstone studio I: build with coding tools",
+            "Capstone studio II: evaluate, defend, and ship",
+            "Pydantic", "quantization-aware", "DPO", "RLHF", "GRPO",
+            "RAG", "checkpoint", "Instructor-provided",
         )
         for phrase in required_phrases:
             with self.subTest(phrase=phrase):
-                self.assertIn(phrase, self.class_plan)
+                self.assertTrue(phrase in self.class_plan, f"Missing curriculum phrase: {phrase}")
 
     def test_active_adaptation_assets_are_present_in_public_catalog(self) -> None:
         required_paths = {

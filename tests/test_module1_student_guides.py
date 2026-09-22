@@ -9,21 +9,18 @@ ROOT = Path(__file__).resolve().parents[1]
 MODULE_ONE = {
     3: ("NumPy and pandas: from arrays to DataFrames", 50, 1, 54),
     4: ("SQL, exploratory analysis, and applied statistics", 50, 0, 23),
-    5: ("Visualization and machine-learning foundations", 40, 2, 15),
+    5: ("Visualization and machine-learning foundations", 40, 2, 11),
     6: ("Preprocessing, feature engineering, and regression", 55, 2, 14),
     7: ("Classification, model selection, and hyperparameter optimization", 55, 0, 34),
     8: ("Clustering and dimensionality reduction", 40, 0, 24),
     9: ("Ensembles, recommenders, and classical text analytics", 45, 0, 13),
-    10: ("Module 1 capstone build, feedback, and revision", 75, 0, 16),
-    11: ("Module 1 capstone showcase and bridge to deep learning", 40, 0, 8),
+    10: ("Module 1 capstone build, feedback, and revision", 75, 0, 0),
+    11: ("Module 1 capstone showcase and bridge to deep learning", 40, 0, 0),
 }
 INCLUSIVE_REQUIRED = {
-    10: ("CapstoneProject.ipynb", "housing_data.csv"),
-    11: ("heart-disease.README", "reviews.csv"),
     14: ("autograd.ipynb", "creating_tensors.ipynb"),
     15: ("Full Lecture Speech_ Building a Shallow Feedforward Network.docx", "Simple_MLP_Assignment.ipynb"),
     22: ("module_2_capstone_handout.html", "DeskTech_Vision_Capstone_Student.ipynb"),
-    28: ("embedding_methods.ipynb",),
 }
 
 
@@ -36,9 +33,9 @@ class ModuleOneStudentGuidePublicContractTests(unittest.TestCase):
             for day in MODULE_ONE
         }
 
-    def test_hub_has_eleven_full_guides_and_twenty_two_resource_outlines(self) -> None:
-        self.assertEqual(11, self.hub.count("Full guide"))
-        self.assertEqual(22, self.hub.count("Resource outline"))
+    def test_hub_has_twenty_two_full_guides_and_eleven_resource_outlines(self) -> None:
+        self.assertEqual(22, self.hub.count(">Full guide</span>"))
+        self.assertEqual(11, self.hub.count(">Resource outline</span>"))
         self.assertNotIn("Ready", self.hub)
         self.assertNotIn("Coming soon", self.hub)
         self.assertEqual(33, self.hub.count('href="student-day-'))
@@ -77,16 +74,11 @@ class ModuleOneStudentGuidePublicContractTests(unittest.TestCase):
         for label in labels[3:]:
             self.assertRegex(page, rf'<details class="resource-group">.*?{re.escape(label)}')
 
-    def test_capstone_resources_are_linked_not_replaced_with_fallback(self) -> None:
-        for day, names in {
-            10: ("CapstoneProject.ipynb", "housing_data.csv"),
-            11: ("heart-disease.README", "reviews.csv"),
-        }.items():
-            with self.subTest(day=day):
-                page = self.pages[day]
-                self.assertNotIn("No public-surface resource is currently available.", page)
-                for name in names:
-                    self.assertRegex(page, rf'<a[^>]+href="https://[^\"]+"[^>]*>[^<]*{re.escape(name)}')
+    def test_intentionally_deleted_capstone_resources_are_absent(self) -> None:
+        for day in (10, 11):
+            for name in ("CapstoneProject.ipynb", "housing_data.csv", "heart-disease.README", "reviews.csv"):
+                self.assertNotIn(name, self.pages[day])
+            self.assertIn('name="source-student-view-sha256"', self.pages[day])
 
     def test_required_resources_are_visible_even_when_their_format_is_not_promoted(self) -> None:
         for day, names in INCLUSIVE_REQUIRED.items():
@@ -96,11 +88,10 @@ class ModuleOneStudentGuidePublicContractTests(unittest.TestCase):
                     self.assertRegex(page, rf'<a[^>]+href="https://[^\"]+"[^>]*>[^<]*{re.escape(name)}')
                 self.assertIn("Required · Public link", page)
 
-    def test_day_twenty_eight_duplicate_required_resource_has_one_safe_canonical_card(self) -> None:
-        page = (ROOT / "student-day-28.html").read_text(encoding="utf-8")
-        self.assertEqual(1, page.count("embedding_methods.ipynb"))
-        self.assertIn("Required · Public link", page)
-        self.assertNotIn("Required · Instructor-mediated access", page)
+    def test_embedding_methods_excluded_from_every_module_three_guide(self) -> None:
+        for day in range(23, 34):
+            page = (ROOT / f"student-day-{day:02d}.html").read_text(encoding="utf-8")
+            self.assertNotIn("embedding_methods.ipynb", page)
 
     def test_public_guides_expose_no_private_data_or_identifiers(self) -> None:
         combined = self.hub + "\n" + "\n".join(self.pages.values())

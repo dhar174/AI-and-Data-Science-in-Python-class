@@ -91,6 +91,15 @@ test("full targets are files only and sorted deterministically", () => {
   );
 });
 
+test("preflight covers present formats after intentional inventory deletions", () => {
+  const targets = selectPreflight([
+    record("1", "document", "https://docs.google.com/document/d/doc"),
+    record("2", "file", "https://drive.google.com/file/d/file"),
+  ]);
+  assert.deepEqual(targets.map((target) => target.category), ["drive_file", "docs_document"]);
+  assert.throws(() => selectPreflight([]), /No public file routes/);
+});
+
 test("summary and markdown report expose the release blockers", () => {
   const results = [
     { classification: "accessible" },

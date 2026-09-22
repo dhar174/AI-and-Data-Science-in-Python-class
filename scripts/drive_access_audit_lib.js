@@ -136,19 +136,21 @@ function selectPreflight(records) {
     },
   ];
 
-  return selectors.map((selector) => {
+  const targets = selectors.flatMap((selector) => {
     const record = files.find(selector.predicate);
     if (!record) {
-      throw new Error(`No public catalog record found for ${selector.category}.`);
+      return [];
     }
-    return {
+    return [{
       category: selector.category,
       id: record.id,
       name: record.name,
       url_field: selector.urlField,
       requested_url: record.cloud[selector.urlField],
-    };
+    }];
   });
+  if (!targets.length) throw new Error("No public file routes are available for preflight.");
+  return targets;
 }
 
 function buildFullAuditTargets(records) {
@@ -189,6 +191,7 @@ function markdownReport(report) {
     `- Catalog: \`${report.catalog_path}\``,
     `- Initial browser cookies: ${report.browser.initial_cookie_count}`,
     `- Preflight: ${report.preflight.status} (${report.preflight.summary.accessible}/${report.preflight.summary.total} accessible)`,
+    `- Formats absent from this catalog: ${(report.preflight.not_applicable_categories || []).join(", ") || "none"}`,
   ];
 
   if (report.full_audit) {

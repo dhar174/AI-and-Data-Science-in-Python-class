@@ -79,10 +79,10 @@ BINARY_SUFFIXES = {
 WINDOWS_PATH = re.compile(r"(?i)(?<![a-z0-9])(?:[a-z]:[\\/](?!/)|\\\\[^\\/\s]+[\\/])")
 FILE_URL = re.compile(r"(?i)\bfile:(?:/{1,3}|\\)")
 EXPECTED_CLASS_PLAN_SOURCE_HASHES = {
-    "schedule-sha256": "4d832a648d386cad52ded0f4fb87ffeed7fc7bc040a36b6651e428f13f888b80",
-    "syllabus-sha256": "834e1831762ab00aa683087bfb1d276ddc4788849d6c38a62211787d22275cfa",
+    "schedule-sha256": "c5a338f11fa292aac969cf0487ea5aa73b4675e3db39531b9f8c55c5c148b649",
+    "syllabus-sha256": "e73fbc034531fdbe319fa38a7ce06e03d61f4e56c1a23cfe82be7cf63fc17a15",
 }
-EXPECTED_CLASS_PLAN_SHA256 = "33ada3e93ba1fa7e3f496d2ce20cbfb699fd1610ef1b9f36cdf77b41573929f3"
+EXPECTED_CLASS_PLAN_SHA256 = "189d8815f8af3ff69ad1d7230a4a2790c529b835616cca5088b890d579729035"
 EXPECTED_DAY_ONE_PHASES = (
     ("orientation", "5:30–6:10 p.m."),
     ("analytic-approaches", "6:10–6:35 p.m."),
@@ -126,6 +126,26 @@ STUDENT_GUIDE_FORBIDDEN = (
     "review_note",
     "Instructor-only",
 )
+
+
+class ClassPlanAssetParser(HTMLParser):
+    """Inspect real elements without treating escaped teaching examples as assets."""
+    def __init__(self):
+        super().__init__()
+        self.has_assets = False
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if (tag == "script" or any(key in attributes for key in ("src", "srcset", "poster")) or
+                (tag == "link" and ("href" in attributes or "stylesheet" in (attributes.get("rel") or "").lower().split())) or
+                (tag == "object" and "data" in attributes)):
+            self.has_assets = True
+
+
+def class_plan_has_assets(html):
+    parser = ClassPlanAssetParser()
+    parser.feed(html)
+    return parser.has_assets
 
 
 class ClassPlanNavigationParser(HTMLParser):
@@ -310,10 +330,14 @@ def validate_student_guides_hub(document: str) -> list[str]:
         errors.append("student-guides.html day entries must be ordered Day 1 through Day 33")
     ready = [entry for entry in parser.day_entries if "ready" in entry["statuses"]]
     soon = [entry for entry in parser.day_entries if "soon" in entry["statuses"]]
-    if len(ready) != 11:
-        errors.append("student-guides.html must contain exactly 11 Full guide days")
-    if len(soon) != 22:
-        errors.append("student-guides.html must contain exactly 22 Resource outline days")
+    if len(ready) != 22:
+        errors.append("student-guides.html must contain exactly 22 Full guide days")
+    if len(soon) != 11:
+        errors.append("student-guides.html must contain exactly 11 Resource outline days")
+    expected_full = set(range(1, 12)) | set(range(23, 34))
+    actual_full = {day for day, entry in zip(day_numbers, parser.day_entries) if "ready" in entry["statuses"]}
+    if actual_full != expected_full:
+        errors.append("student-guides.html full guides must be Days 1–11 and 23–33; Module 2 remains outlines")
     expected_links = [f"student-day-{number:02d}.html" for number in range(1, 34)]
     actual_links = [entry["hrefs"][0] if entry["hrefs"] else "" for entry in parser.day_entries]
     if actual_links != expected_links:
@@ -524,7 +548,7 @@ def verify(root: Path) -> list[str]:
                 errors.append(f"class-plan.html: missing required contract: {marker}")
         if class_plan.count('class="session-detail"') != 33:
             errors.append("class-plan.html: must contain exactly 33 session-detail sections")
-        if "<script" in class_plan.casefold() or 'rel="stylesheet"' in class_plan.casefold() or re.search(r"\bsrc=", class_plan, re.IGNORECASE):
+        if class_plan_has_assets(class_plan):
             errors.append("class-plan.html: must be self-contained without scripts or external assets")
         for name, expected in EXPECTED_CLASS_PLAN_SOURCE_HASHES.items():
             if f'<meta name="{name}" content="{expected}">' not in class_plan:

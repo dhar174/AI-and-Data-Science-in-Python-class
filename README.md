@@ -27,7 +27,9 @@ The site is not considered deployed until the anonymous Drive audit, repository 
 
 ## Student Day Guides
 
-`student-guides.html` is the 33-day hub. `student-day-01.html` and `student-day-02.html` are detailed class-night guides; the remaining pages retain their generated public resource views. The shared `student-guides.css` and `student-guides.js` support every guide page. All Student Day Guide outputs are generated from validated private curriculum sources and must not be hand-edited in this checkout.
+`student-guides.html` is the 33-day hub. Days 1–11 (Module 1) and Days 23–33 (Module 3) have full guides. Days 12–22 (Module 2) remain resource outlines. The shared `student-guides.css` and `student-guides.js` support every guide page. All Student Day Guide outputs are generated from validated private curriculum sources and must not be hand-edited in this checkout.
+
+Module 3 progresses from language models and Python APIs through local inference, adaptation, LangGraph, RAG, agent architectures, and coding-tool workshops. Its final two sessions are capstone studios. Complete lesson resource collections are independent of the live teaching budget: Required resources remain visible at zero live minutes, relevant alternatives remain available, and student materials without a safe public link are labeled **Instructor-provided**. Students need one available coding tool, not subscriptions to every demonstrated product.
 
 Run the private generator from the private Course Library Portal directory, targeting this public checkout:
 
