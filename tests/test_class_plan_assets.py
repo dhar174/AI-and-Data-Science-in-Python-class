@@ -12,7 +12,17 @@ spec.loader.exec_module(verifier)
 
 class AssetChecks(unittest.TestCase):
     def test_real_assets_fail(self):
-        for html in ('<script>bad()</script>', '<img SRC="x">', '<link rel="alternate stylesheet" href="x">'):
+        for html in (
+            '<script>bad()</script>',
+            '<img SRC="x">',
+            '<link rel="alternate stylesheet" href="x">',
+            '<link rel="icon" href="https://example.org/icon.png">',
+            '<img srcset="small.png 1x, large.png 2x">',
+            '<source srcset="image.webp"/>',
+            '<object data="external.pdf"></object>',
+            '<video poster="external.png"></video>',
+            '<link rel="preload" href="font.woff">',
+        ):
             with self.subTest(html=html):
                 self.assertTrue(verifier.class_plan_has_assets(html))
 

@@ -79,10 +79,10 @@ BINARY_SUFFIXES = {
 WINDOWS_PATH = re.compile(r"(?i)(?<![a-z0-9])(?:[a-z]:[\\/](?!/)|\\\\[^\\/\s]+[\\/])")
 FILE_URL = re.compile(r"(?i)\bfile:(?:/{1,3}|\\)")
 EXPECTED_CLASS_PLAN_SOURCE_HASHES = {
-    "schedule-sha256": "d304854b053288e8c04489c910640df07f87777f84c3f14a55d6292dbb7ca603",
+    "schedule-sha256": "c5a338f11fa292aac969cf0487ea5aa73b4675e3db39531b9f8c55c5c148b649",
     "syllabus-sha256": "e73fbc034531fdbe319fa38a7ce06e03d61f4e56c1a23cfe82be7cf63fc17a15",
 }
-EXPECTED_CLASS_PLAN_SHA256 = "1bbca96725e0ee13d2f0198bcc4f3c43845a8730d05f737357b98578d739fe8b"
+EXPECTED_CLASS_PLAN_SHA256 = "189d8815f8af3ff69ad1d7230a4a2790c529b835616cca5088b890d579729035"
 EXPECTED_DAY_ONE_PHASES = (
     ("orientation", "5:30–6:10 p.m."),
     ("analytic-approaches", "6:10–6:35 p.m."),
@@ -136,8 +136,9 @@ class ClassPlanAssetParser(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         attributes = dict(attrs)
-        if (tag == "script" or "src" in attributes or
-                (tag == "link" and "stylesheet" in (attributes.get("rel") or "").lower().split())):
+        if (tag == "script" or any(key in attributes for key in ("src", "srcset", "poster")) or
+                (tag == "link" and ("href" in attributes or "stylesheet" in (attributes.get("rel") or "").lower().split())) or
+                (tag == "object" and "data" in attributes)):
             self.has_assets = True
 
 
