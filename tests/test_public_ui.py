@@ -195,14 +195,14 @@ class PublicUiTests(unittest.TestCase):
         parser = StudentGuideParser()
         parser.feed(self.student_day_01)
         expected = (
-            ("orientation", "5:30–6:10 p.m."),
-            ("analytic-approaches", "6:10–6:35 p.m."),
-            ("guided-practice", "6:35–7:25 p.m."),
-            ("capstone-domains", "7:25–7:55 p.m."),
-            ("break", "7:55–8:25 p.m."),
-            ("case-study-lab", "8:25–9:20 p.m."),
-            ("assessment", "9:20–9:50 p.m."),
-            ("exit", "9:50–10:00 p.m."),
+            ('orientation', '5:30-5:45 p.m.'),
+            ('intro-media', '5:45-6:30 p.m.'),
+            ('analytic-approaches', '6:30-7:25 p.m.'),
+            ('lifecycle', '7:25-7:55 p.m.'),
+            ('break', '7:55-8:25 p.m.'),
+            ('case-study-lab', '8:25-9:20 p.m.'),
+            ('assessment', '9:20-9:50 p.m.'),
+            ('exit', '9:50-10:00 p.m.'),
         )
         self.assertEqual(
             [phase_id for phase_id, _ in expected],
@@ -224,6 +224,16 @@ class PublicUiTests(unittest.TestCase):
                     set(attributes.get("rel", "").split())
                 )
             )
+
+    def test_approved_day_one_uses_clean_quiz_v2_and_required_media(self):
+        self.assertIn("https://colab.research.google.com/drive/12Ls4Oa_DFYtqmA-WM6_sLYFbPU_wEtPM", self.student_day_01)
+        self.assertNotIn("1Zn8BsrDAvn-4hpg5umcJ_j5rzBquzX7C", self.student_day_01)
+        self.assertIn("https://docs.google.com/presentation/d/1pHNN2kD3iD9a7Nf_yaSktXmmtagzOYuf/edit", self.student_day_01)
+        self.assertEqual(4, self.student_day_01.count("Required in-class video:"))
+        self.assertIn("Save a copy in Drive", self.student_day_01)
+        self.assertIn("required class preview", self.student_day_01)
+        self.assertNotIn("six-element", self.student_day_01.casefold())
+        self.assertNotIn("Sort role responsibilities", self.student_day_01)
 
     def test_day_two_has_the_exact_python_session_bridge_and_safe_resources(self):
         parser = StudentGuideParser()
@@ -280,7 +290,7 @@ class PublicUiTests(unittest.TestCase):
             (
                 "phase time",
                 "student-day-01.html",
-                lambda text: text.replace("5:30–6:10 p.m.", "5:31–6:10 p.m.", 1),
+                lambda text: text.replace("5:30-5:45 p.m.", "5:31-5:45 p.m.", 1),
             ),
             (
                 "day two phase time",

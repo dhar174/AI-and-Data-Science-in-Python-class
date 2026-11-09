@@ -82,16 +82,16 @@ EXPECTED_CLASS_PLAN_SOURCE_HASHES = {
     "schedule-sha256": "c5a338f11fa292aac969cf0487ea5aa73b4675e3db39531b9f8c55c5c148b649",
     "syllabus-sha256": "e73fbc034531fdbe319fa38a7ce06e03d61f4e56c1a23cfe82be7cf63fc17a15",
 }
-EXPECTED_CLASS_PLAN_SHA256 = "189d8815f8af3ff69ad1d7230a4a2790c529b835616cca5088b890d579729035"
+EXPECTED_CLASS_PLAN_SHA256 = "8d5d5cb99701556c116f62553d73f98665f2113cd65e73dfb59facb998847e48"
 EXPECTED_DAY_ONE_PHASES = (
-    ("orientation", "5:30–6:10 p.m."),
-    ("analytic-approaches", "6:10–6:35 p.m."),
-    ("guided-practice", "6:35–7:25 p.m."),
-    ("capstone-domains", "7:25–7:55 p.m."),
-    ("break", "7:55–8:25 p.m."),
-    ("case-study-lab", "8:25–9:20 p.m."),
-    ("assessment", "9:20–9:50 p.m."),
-    ("exit", "9:50–10:00 p.m."),
+    ('orientation', '5:30-5:45 p.m.'),
+    ('intro-media', '5:45-6:30 p.m.'),
+    ('analytic-approaches', '6:30-7:25 p.m.'),
+    ('lifecycle', '7:25-7:55 p.m.'),
+    ('break', '7:55-8:25 p.m.'),
+    ('case-study-lab', '8:25-9:20 p.m.'),
+    ('assessment', '9:20-9:50 p.m.'),
+    ('exit', '9:50-10:00 p.m.'),
 )
 EXPECTED_DAY_TWO_PHASES = (
     ("storytelling-bridge", "5:30–5:50 p.m."),
@@ -363,7 +363,7 @@ def validate_student_day_one(document: str) -> list[str]:
     ]
     if len(break_phases) != 1 or break_phases[0]["id"] != "break":
         errors.append("student-day-01.html must contain one protected break phase")
-    if "Break: 7:55–8:25 p.m." not in document:
+    if "Break: 7:55-8:25 p.m." not in document:
         errors.append("student-day-01.html is missing the protected break banner")
     errors.extend(validate_student_day_external_links(document, parser, "student-day-01.html", 5))
     return errors

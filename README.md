@@ -40,6 +40,12 @@ py -3 -B .\build_student_guides.py --output-dir "<public-checkout>" --check
 
 Only public-safe generated student-guide output crosses into this repository. Private source documents, local paths, internal IDs, and instructor-only material remain outside the public checkout.
 
+## Approved Day 1 release source
+
+The November 9 Day 1 update uses the versioned private source bundle `docs/three_module_curriculum_package/approved_day1_release_2026-11-09`. Its `approved_day1_source.json`, retained source inputs/baselines, and `generate_approved_day1.py` reproduce the approved data in the existing interface. Run the scoped generator with `--public-root <public-checkout> --source-dir <private-approved-day1-source>` before verification. Do not replace this approved Day 1 with the older unamended instructor-guide view.
+
+Only Day 1, its hub entry, and its class-plan section were approved for this release. The other 32 guide files and class-plan session sections remain unchanged. The corrected v2 deck is a separate Drive copy; the original remains a reference. The clean analytic quiz asks students to save personal copies. Colab page access is separate from live runtime availability.
+
 ## Manual regeneration and release
 
 Run this workflow after the private source catalog changes:
