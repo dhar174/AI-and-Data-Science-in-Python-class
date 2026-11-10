@@ -82,7 +82,7 @@ EXPECTED_CLASS_PLAN_SOURCE_HASHES = {
     "schedule-sha256": "c5a338f11fa292aac969cf0487ea5aa73b4675e3db39531b9f8c55c5c148b649",
     "syllabus-sha256": "e73fbc034531fdbe319fa38a7ce06e03d61f4e56c1a23cfe82be7cf63fc17a15",
 }
-EXPECTED_CLASS_PLAN_SHA256 = "8d5d5cb99701556c116f62553d73f98665f2113cd65e73dfb59facb998847e48"
+EXPECTED_CLASS_PLAN_SHA256 = "9f3d0102cb90870226f4c8845738579532a94a7be83d9c304a197a227077837a"
 EXPECTED_DAY_ONE_PHASES = (
     ('orientation', '5:30-5:45 p.m.'),
     ('intro-media', '5:45-6:30 p.m.'),
@@ -94,16 +94,14 @@ EXPECTED_DAY_ONE_PHASES = (
     ('exit', '9:50-10:00 p.m.'),
 )
 EXPECTED_DAY_TWO_PHASES = (
-    ("storytelling-bridge", "5:30–5:50 p.m."),
-    ("python-launch", "5:50–6:10 p.m."),
-    ("values-tracing", "6:10–6:40 p.m."),
-    ("control-flow-functions", "6:40–7:10 p.m."),
-    ("clean-mean", "7:10–7:35 p.m."),
-    ("diagnostic", "7:35–7:55 p.m."),
-    ("break", "7:55–8:25 p.m."),
-    ("pyquest", "8:25–9:20 p.m."),
-    ("debug-mini-script", "9:20–9:45 p.m."),
-    ("exit", "9:45–10:00 p.m."),
+    ('storytelling-bridge', '5:30-5:50 p.m.'),
+    ('python-values', '5:50-6:30 p.m.'),
+    ('collections', '6:30-7:25 p.m.'),
+    ('conditions', '7:25-7:55 p.m.'),
+    ('break', '7:55-8:25 p.m.'),
+    ('pyquest', '8:25-9:20 p.m.'),
+    ('guided-practice', '9:20-9:50 p.m.'),
+    ('exit', '9:50-10:00 p.m.'),
 )
 STUDENT_GUIDE_EXTERNAL_HOSTS = {
     "drive.google.com",
@@ -397,7 +395,7 @@ def validate_student_day_two(document: str) -> list[str]:
     expected_ids = [phase_id for phase_id, _time_range in EXPECTED_DAY_TWO_PHASES]
     actual_ids = [phase["id"] for phase in parser.phases]
     if actual_ids != expected_ids:
-        errors.append("student-day-02.html must contain the ten ordered Day 2 phases")
+        errors.append("student-day-02.html must contain the eight ordered Day 2 phases")
     if len(parser.phases) == len(EXPECTED_DAY_TWO_PHASES):
         for phase, (_phase_id, time_range) in zip(parser.phases, EXPECTED_DAY_TWO_PHASES):
             if time_range not in str(phase["summary"]):
@@ -409,17 +407,16 @@ def validate_student_day_two(document: str) -> list[str]:
     ]
     if len(break_phases) != 1 or break_phases[0]["id"] != "break":
         errors.append("student-day-02.html must contain one protected break phase")
-    if "Break: 7:55–8:25 p.m." not in document:
+    if "Break: 7:55-8:25 p.m." not in document:
         errors.append("student-day-02.html is missing the protected break banner")
     for required in (
-        "Data Storyteller Quest",
-        "Python foundations for analysis",
-        "clean_mean",
-        "PyQuest",
-        "alternate class activity",
-        "45 minutes",
-        "https://data-storyteller-quest-ue4r4kw7oq-ue.a.run.app",
-        "https://pyquest-ue4r4kw7oq-uw.a.run.app",
+        'Data Storyteller Quest',
+        'Python foundations and data structures',
+        'PyQuest',
+        'Python Quest',
+        'independent-practice allocation',
+        'Save a personal',
+        'Required in-class video:',
     ):
         if required not in document:
             errors.append(f"student-day-02.html is missing its Day 2 contract: {required}")

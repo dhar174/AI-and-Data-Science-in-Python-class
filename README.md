@@ -46,6 +46,10 @@ The November 9 Day 1 update uses the versioned private source bundle `docs/three
 
 Only Day 1, its hub entry, and its class-plan section were approved for this release. The other 32 guide files and class-plan session sections remain unchanged. The corrected v2 deck is a separate Drive copy; the original remains a reference. The clean analytic quiz asks students to save personal copies. Colab page access is separate from live runtime availability.
 
+## Approved Day 2 release source
+
+Day 2 was separately approved on November 10 from the reviewed Day 2 packet. Its private scoped publisher retains the Library version/provenance and derived student schedule in `approved_day2_source.json`. It updates only the Day 2 guide, hub entry and class-plan section; Day 1 and all other days are preserved. Do not regenerate this release from the earlier unapproved Module 1 proposal or publish the packet’s instructor checkpoints and preparation notes.
+
 ## Manual regeneration and release
 
 Run this workflow after the private source catalog changes:
