@@ -239,16 +239,14 @@ class PublicUiTests(unittest.TestCase):
         parser = StudentGuideParser()
         parser.feed(self.student_day_02)
         expected = (
-            ("storytelling-bridge", "5:30–5:50 p.m."),
-            ("python-launch", "5:50–6:10 p.m."),
-            ("values-tracing", "6:10–6:40 p.m."),
-            ("control-flow-functions", "6:40–7:10 p.m."),
-            ("clean-mean", "7:10–7:35 p.m."),
-            ("diagnostic", "7:35–7:55 p.m."),
-            ("break", "7:55–8:25 p.m."),
-            ("pyquest", "8:25–9:20 p.m."),
-            ("debug-mini-script", "9:20–9:45 p.m."),
-            ("exit", "9:45–10:00 p.m."),
+            ('storytelling-bridge', '5:30-5:50 p.m.'),
+            ('python-values', '5:50-6:30 p.m.'),
+            ('collections', '6:30-7:25 p.m.'),
+            ('conditions', '7:25-7:55 p.m.'),
+            ('break', '7:55-8:25 p.m.'),
+            ('pyquest', '8:25-9:20 p.m.'),
+            ('guided-practice', '9:20-9:50 p.m.'),
+            ('exit', '9:50-10:00 p.m.'),
         )
         self.assertEqual(
             [phase_id for phase_id, _ in expected],
@@ -261,14 +259,13 @@ class PublicUiTests(unittest.TestCase):
             [phase["id"] for phase in parser.phases if "break-phase" in phase["classes"]],
         )
         for marker in (
-            "Data Storyteller Quest",
-            "Python foundations for analysis",
-            "clean_mean",
-            "PyQuest",
-            "alternate class activity",
-            "45 minutes",
-            "https://data-storyteller-quest-ue4r4kw7oq-ue.a.run.app",
-            "https://pyquest-ue4r4kw7oq-uw.a.run.app",
+            'Data Storyteller Quest',
+            'Python foundations and data structures',
+            'PyQuest',
+            'Python Quest',
+            'independent-practice allocation',
+            'Save a personal',
+            'Required in-class video:',
         ):
             self.assertIn(marker, self.student_day_02)
         for attributes in parser.external_links:
@@ -278,6 +275,18 @@ class PublicUiTests(unittest.TestCase):
                     set(attributes.get("rel", "").split())
                 )
             )
+
+        self.assertEqual(4, self.student_day_02.count("Required in-class video:"))
+        self.assertNotIn("clean_mean", self.student_day_02)
+        self.assertNotIn("Instructor sequence", self.student_day_02)
+
+        self.assertEqual(4, self.student_day_02.count("Required in-class video:"))
+        self.assertNotIn("clean_mean", self.student_day_02)
+        self.assertNotIn("Instructor sequence", self.student_day_02)
+
+        self.assertEqual(4, self.student_day_02.count("Required in-class video:"))
+        self.assertNotIn("clean_mean", self.student_day_02)
+        self.assertNotIn("Instructor sequence", self.student_day_02)
 
     def test_public_verifier_rejects_student_guide_mutations(self):
         mutations = (
@@ -295,7 +304,7 @@ class PublicUiTests(unittest.TestCase):
             (
                 "day two phase time",
                 "student-day-02.html",
-                lambda text: text.replace("5:30–5:50 p.m.", "5:31–5:50 p.m.", 1),
+                lambda text: text.replace("5:30-5:50 p.m.", "5:31-5:50 p.m.", 1),
             ),
             (
                 "external link safety",
