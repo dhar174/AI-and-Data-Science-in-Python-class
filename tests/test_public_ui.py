@@ -288,6 +288,21 @@ class PublicUiTests(unittest.TestCase):
         self.assertNotIn("clean_mean", self.student_day_02)
         self.assertNotIn("Instructor sequence", self.student_day_02)
 
+    def test_day_two_excludes_rejected_slides_and_keeps_distinct_arcade(self):
+        plan = (ROOT / "class-plan.html").read_text(encoding="utf-8")
+        day_two_plan = re.search(
+            r'<details class="session-detail" id="day-2">.*?</details>', plan, re.S
+        ).group(0)
+        for rejected_id in (
+            "1ShU4TPKGsQ-mKi0mc4ihizn5p-zcCfPh",
+            "1iELK8LtIHrXKckIyhcLvn1yEaCvQnzab",
+        ):
+            self.assertNotIn(rejected_id, self.student_day_02)
+            self.assertNotIn(rejected_id, day_two_plan)
+        self.assertNotIn("Use the slides", self.student_day_02)
+        self.assertIn("Python_Data_Arcade.pptx", self.student_day_02)
+        self.assertIn("Required resources (16)", self.student_day_02)
+
     def test_public_verifier_rejects_student_guide_mutations(self):
         mutations = (
             ("missing asset", "student-guides.css", None),
