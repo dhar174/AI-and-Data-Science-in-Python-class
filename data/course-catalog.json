@@ -2,8 +2,8 @@
   "summary": {
     "catalog_version": 4,
     "delivery_mode": "public",
-    "generated_utc": "2026-09-21T22:27:24Z",
-    "source_catalog_sha256": "565C811CE25C16E4AD8DB936097B588F11D16E07A5A2C691CECD6B44E668B589",
+    "generated_utc": "2026-11-16T21:00:29Z",
+    "source_catalog_sha256": "F55AD19E7F4537B39C774E2BA29958196355D98BD8BCC9FD3875E7CAEE8D62FD",
     "total_files": 943,
     "total_web_apps": 48,
     "total_resources": 991,
@@ -43592,12 +43592,12 @@
       "is_review": false,
       "web_app": {
         "service_name": "pyquest",
-        "url": "https://pyquest-ue4r4kw7oq-uw.a.run.app",
+        "url": "https://dhar174.github.io/AI-and-Data-Science-in-Python-class/games/pyquest/",
         "description": "Practice Python programming concepts through interactive challenges.",
         "link_status": "available",
         "last_checked_utc": "2026-07-22T22:49:19Z"
       },
-      "search_text": "pyquest pyquest https://pyquest-ue4r4kw7oq-uw.a.run.app practice python programming concepts through interactive challenges. 01 - module 1 - data science and machine learning/03 - python programming foundations/pyquest 01 - module 1 - data science and machine learning 03 - python programming foundations 05 - activities and assessments student available web app"
+      "search_text": "pyquest pyquest https://dhar174.github.io/ai-and-data-science-in-python-class/games/pyquest/ practice python programming concepts through interactive challenges. 01 - module 1 - data science and machine learning/03 - python programming foundations/pyquest 01 - module 1 - data science and machine learning 03 - python programming foundations 05 - activities and assessments student available web app"
     },
     {
       "id": "web-eab0a8cdd2b8e218",
