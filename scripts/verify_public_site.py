@@ -82,7 +82,7 @@ EXPECTED_CLASS_PLAN_SOURCE_HASHES = {
     "schedule-sha256": "c5a338f11fa292aac969cf0487ea5aa73b4675e3db39531b9f8c55c5c148b649",
     "syllabus-sha256": "e73fbc034531fdbe319fa38a7ce06e03d61f4e56c1a23cfe82be7cf63fc17a15",
 }
-EXPECTED_CLASS_PLAN_SHA256 = "b141ed4fd70c60d75967630b65ec301d1cd524f2b4a88b8b136c9e0ed69668e2"
+EXPECTED_CLASS_PLAN_SHA256 = "07edf5e7dc33533d8cbac6d3da544729dbf4601d71d607432b371efad81fde1c"
 EXPECTED_DAY_ONE_PHASES = (
     ('orientation', '5:30-5:45 p.m.'),
     ('intro-media', '5:45-6:30 p.m.'),
@@ -108,7 +108,7 @@ STUDENT_GUIDE_EXTERNAL_HOSTS = {
     "docs.google.com",
     "colab.research.google.com",
     "data-storyteller-quest-ue4r4kw7oq-ue.a.run.app",
-    "pyquest-ue4r4kw7oq-uw.a.run.app",
+    "dhar174.github.io",
     "python-quest-ue4r4kw7oq-uw.a.run.app",
 }
 STUDENT_GUIDE_FORBIDDEN = (
