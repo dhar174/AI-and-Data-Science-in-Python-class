@@ -5,7 +5,7 @@ ROOT=Path(__file__).resolve().parents[1]
 class Day3Continuation(unittest.TestCase):
  def test_approved_content(self):
   s=(ROOT/'student-day-03.html').read_text(encoding='utf-8')
-  for value in ['Python basics continuation','3. Conversions','Strings','7:55–8:25','5:45–6:15','All five videos','1qCc9MeZixTeOAgdla3dfF7S5Tdi85kJb','1BskAVTu1IU1CVfD1mN89w6xlRxbcA1Ni','python-quest-ue4r4kw7oq-uw.a.run.app/','source-approved-student-sha256']:
+  for value in ['Python basics continuation','3. Conversions','Strings','7:30–8:00','5:45–6:15','All five videos','1qCc9MeZixTeOAgdla3dfF7S5Tdi85kJb','1BskAVTu1IU1CVfD1mN89w6xlRxbcA1Ni','python-quest-ue4r4kw7oq-uw.a.run.app/','source-approved-student-sha256']:
    self.assertIn(value,s)
   for value in ['NumPy and pandas','Instructor packet','Audit/readiness','not published','file://','Private student-schedule']:
    self.assertNotIn(value,s)
