@@ -82,3 +82,8 @@ The public-only command reads the existing public catalog and rewrites both
 `data/course-catalog.json` and `data/catalog-data.js`. It never writes to the
 offline course-library folder. Full source-based exports should also pass
 `--denylist data/public-denylist.json` so hidden records do not return later.
+
+## Approved Day 3 continuation (November 16, 2026)
+
+The recording-informed Day 3 continuation supersedes the original NumPy/pandas Day 3 plan for this class. `student-day-03.html` is generated from the approved private student source by the private generator's Day 3 release renderer. It retains all five approved videos, the original updated Builder URL, the lecture notebook, and the protected break. The general curriculum plan remains the original course sequence; use the Day 3 guide for this session. The dedicated continuation tests replace the obsolete Day 3 NumPy resource-count assertions; other day contracts are unchanged. No private instructor packet is published.
+
