@@ -7,7 +7,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MODULE_ONE = {
-    3: ("NumPy and pandas: from arrays to DataFrames", 50, 1, 54),
     4: ("SQL, exploratory analysis, and applied statistics", 50, 0, 23),
     5: ("Visualization and machine-learning foundations", 40, 2, 11),
     6: ("Preprocessing, feature engineering, and regression", 55, 2, 14),
